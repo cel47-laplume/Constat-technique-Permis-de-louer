@@ -1,0 +1,3208 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>CEL-47 — État des lieux technique contradictoire</title>
+<style>
+:root{
+  --navy:#13294b;
+  --navy-light:#1d3a63;
+  --gold:#a78a55;
+  --gold-light:#cbb789;
+  --bg:#f4f5f7;
+  --card:#ffffff;
+  --line:#dde1e7;
+  --text:#1c2430;
+  --text-soft:#5b6472;
+  --ok:#2e7d4f;
+  --warn:#b8860b;
+  --bad:#b2342a;
+  --radius:10px;
+}
+*{box-sizing:border-box;}
+html,body{margin:0;padding:0;background:var(--bg);color:var(--text);
+  font-family:"Segoe UI",Calibri,Arial,sans-serif;font-size:15px;line-height:1.45;}
+button{font-family:inherit;}
+img{max-width:100%;display:block;}
+
+/* ===== Bandeau identité ===== */
+.topbar{
+  background:linear-gradient(135deg,var(--navy) 0%,var(--navy-light) 100%);
+  color:#fff;padding:16px 20px;position:sticky;top:0;z-index:50;
+  box-shadow:0 2px 8px rgba(0,0,0,.25);
+}
+.topbar-inner{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;max-width:1100px;margin:0 auto;}
+.brand{display:flex;align-items:center;gap:12px;}
+.brand-mark{width:42px;height:42px;border-radius:8px;background:var(--gold);
+  display:flex;align-items:center;justify-content:center;font-weight:700;color:var(--navy);font-size:17px;flex:none;}
+.brand-text h1{margin:0;font-size:17px;font-weight:600;letter-spacing:.2px;}
+.brand-text p{margin:1px 0 0;font-size:11.5px;color:#cdd6e4;}
+.topbar-actions{display:flex;gap:8px;flex-wrap:wrap;}
+.btn{
+  border:1px solid transparent;border-radius:7px;padding:9px 14px;font-size:13.5px;font-weight:600;
+  cursor:pointer;transition:filter .12s, transform .05s;display:inline-flex;align-items:center;gap:6px;
+  -webkit-tap-highlight-color:transparent;touch-action:manipulation;
+}
+.btn:active{transform:scale(.97);}
+.btn-gold{background:var(--gold);color:var(--navy);}
+.btn-gold:hover{filter:brightness(1.08);}
+.btn-ghost{background:rgba(255,255,255,.12);color:#fff;border-color:rgba(255,255,255,.35);}
+.btn-ghost:hover{background:rgba(255,255,255,.2);}
+.btn-line{background:#fff;color:var(--navy);border:1.5px solid var(--navy);}
+.btn-line:hover{background:#f0f2f6;}
+.btn-danger{background:#fff;color:var(--bad);border:1.5px solid var(--bad);}
+.btn-danger:hover{background:#fdeeec;}
+.btn-sm{padding:6px 10px;font-size:12.5px;border-radius:6px;}
+.btn[disabled]{opacity:.45;cursor:not-allowed;}
+
+/* ===== Progress ===== */
+.progress-wrap{max-width:1100px;margin:10px auto 0;padding:0 20px;}
+.progress-track{height:6px;background:rgba(255,255,255,.18);border-radius:4px;overflow:hidden;}
+.progress-fill{height:100%;background:var(--gold);border-radius:4px;transition:width .25s;}
+.progress-label{font-size:11px;color:#cdd6e4;margin-top:4px;}
+
+/* ===== Layout général ===== */
+.shell{max-width:1100px;margin:0 auto;padding:18px 16px 120px;}
+.section-nav{
+  display:flex;gap:6px;overflow-x:auto;padding:4px 0 14px;-webkit-overflow-scrolling:touch;
+  scrollbar-width:thin;
+}
+.section-nav::-webkit-scrollbar{height:5px;}
+.section-nav::-webkit-scrollbar-thumb{background:#c9cfd8;border-radius:3px;}
+.navchip{
+  flex:none;border:1.5px solid var(--line);background:#fff;color:var(--text-soft);
+  border-radius:20px;padding:8px 14px;font-size:12.5px;font-weight:600;cursor:pointer;white-space:nowrap;
+  display:flex;align-items:center;gap:6px;
+}
+.navchip.active{background:var(--navy);color:#fff;border-color:var(--navy);}
+.navchip .dot{width:7px;height:7px;border-radius:50%;background:#c9cfd8;flex:none;}
+.navchip.done .dot{background:var(--ok);}
+.navchip.active .dot{background:var(--gold);}
+
+.card{
+  background:var(--card);border:1px solid var(--line);border-radius:var(--radius);
+  padding:18px 18px 20px;margin-bottom:16px;box-shadow:0 1px 3px rgba(20,30,50,.04);
+}
+.card h2{margin:0 0 4px;font-size:18px;color:var(--navy);font-weight:700;}
+.card .subtitle{margin:0 0 16px;font-size:12.5px;color:var(--text-soft);}
+.card h3{margin:22px 0 10px;font-size:14.5px;color:var(--navy);border-bottom:2px solid var(--gold-light);padding-bottom:6px;}
+.card h3:first-of-type{margin-top:4px;}
+
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;}
+@media (max-width:640px){.grid2,.grid3{grid-template-columns:1fr;}}
+
+.field{margin-bottom:13px;}
+.field label{display:block;font-size:12px;font-weight:700;color:var(--text-soft);
+  text-transform:uppercase;letter-spacing:.3px;margin-bottom:5px;}
+.field .hint{font-size:11px;color:#8a93a0;font-weight:400;text-transform:none;letter-spacing:0;margin-top:3px;display:block;}
+input[type=text],input[type=number],input[type=date],input[type=email],input[type=tel],textarea,select{
+  width:100%;border:1.5px solid var(--line);border-radius:7px;padding:10px 11px;font-size:14.5px;
+  font-family:inherit;color:var(--text);background:#fff;
+}
+input:focus,textarea:focus,select:focus{outline:none;border-color:var(--navy);}
+textarea{resize:vertical;min-height:64px;}
+
+/* ===== Choix segmentés (remplace les boutons radio visuels) ===== */
+.seg{display:flex;flex-wrap:wrap;gap:6px;}
+.seg-btn{
+  border:1.5px solid var(--line);background:#fff;color:var(--text);border-radius:7px;
+  padding:8px 13px;font-size:13px;font-weight:600;cursor:pointer;-webkit-tap-highlight-color:transparent;
+}
+.seg-btn.sel{background:var(--navy);color:#fff;border-color:var(--navy);}
+.seg-btn.sel.tone-ok{background:var(--ok);border-color:var(--ok);}
+.seg-btn.sel.tone-warn{background:var(--warn);border-color:var(--warn);}
+.seg-btn.sel.tone-bad{background:var(--bad);border-color:var(--bad);}
+
+/* ===== Elément d'inventaire (sol, murs, plafond, équipement...) ===== */
+.elem-card{
+  border:1.5px solid var(--line);border-radius:9px;margin-bottom:14px;overflow:hidden;background:#fbfbfc;
+}
+.elem-head{
+  display:flex;align-items:stretch;justify-content:space-between;gap:0;
+  width:100%;background:#fff;border-bottom:1px solid transparent;
+}
+.elem-head.open{border-bottom-color:var(--line);}
+.elem-head-toggle{
+  display:flex;align-items:center;justify-content:space-between;gap:10px;flex:1;min-width:0;
+  text-align:left;border:none;margin:0;padding:12px 14px;background:transparent;cursor:pointer;
+  -webkit-tap-highlight-color:transparent;font-family:inherit;font-size:inherit;color:inherit;
+}
+.elem-head-left{display:flex;align-items:center;gap:10px;min-width:0;}
+.elem-icon{width:8px;height:8px;border-radius:50%;background:#c9cfd8;flex:none;}
+.elem-icon.filled{background:var(--ok);}
+.elem-icon.flag{background:var(--bad);}
+.elem-name{font-size:14.5px;font-weight:700;color:var(--navy);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.elem-badge{font-size:10.5px;color:var(--text-soft);font-weight:600;flex:none;}
+.elem-chevron{flex:none;color:var(--text-soft);font-size:13px;transition:transform .15s;}
+.elem-chevron.open{transform:rotate(180deg);}
+.elem-camera-btn{
+  flex:none;width:48px;display:flex;align-items:center;justify-content:center;position:relative;
+  border:none;border-left:1px solid var(--line);background:transparent;cursor:pointer;padding:0;
+  -webkit-tap-highlight-color:transparent;
+}
+.camera-icon{font-size:18px;line-height:1;}
+.camera-badge{
+  position:absolute;top:6px;right:6px;min-width:15px;height:15px;border-radius:8px;
+  background:var(--gold);color:#fff;font-size:9.5px;font-weight:700;line-height:15px;
+  text-align:center;padding:0 3px;
+}
+.elem-body{padding:14px;display:none;}
+.elem-body.open{display:block;}
+
+.photo-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;}
+.photo-thumb{position:relative;width:84px;height:84px;border-radius:7px;overflow:hidden;border:1.5px solid var(--line);flex:none;}
+.photo-thumb img{width:100%;height:100%;object-fit:cover;}
+.photo-thumb .rm{
+  position:absolute;top:2px;right:2px;width:20px;height:20px;border-radius:50%;
+  background:rgba(20,20,20,.65);color:#fff;border:none;font-size:13px;line-height:1;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;padding:0;
+}
+.photo-add{
+  width:84px;height:84px;border-radius:7px;border:1.5px dashed #b7bdc7;background:#fff;color:var(--text-soft);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:10.5px;font-weight:600;
+  cursor:pointer;gap:3px;flex:none;-webkit-tap-highlight-color:transparent;
+}
+.photo-add .plus{font-size:20px;line-height:1;}
+
+.absent-row{display:flex;align-items:center;gap:8px;margin-top:10px;padding-top:10px;border-top:1px dashed var(--line);}
+.checkline{display:flex;align-items:center;gap:8px;cursor:pointer;-webkit-tap-highlight-color:transparent;}
+.checkbox-native{width:19px;height:19px;flex:none;accent-color:var(--navy);}
+.checkline span{font-size:13px;color:var(--text-soft);font-weight:600;}
+
+/* ===== Bandeau résumé pièce ===== */
+.room-summary{
+  display:flex;gap:14px;flex-wrap:wrap;background:#f6f4ec;border:1px solid var(--gold-light);
+  border-radius:8px;padding:10px 14px;margin-bottom:16px;font-size:12.5px;color:var(--navy);
+}
+.room-summary b{font-size:14px;}
+
+/* ===== Liste réserves / désordres signés ===== */
+.flag-card{border:1.5px solid #e3b9b5;background:#fdf4f3;border-radius:9px;padding:12px 14px;margin-bottom:10px;}
+.flag-card .ft{font-size:12px;font-weight:700;color:var(--bad);text-transform:uppercase;letter-spacing:.3px;margin-bottom:3px;}
+.flag-card p{margin:0;font-size:13.5px;}
+
+/* ===== Pièces (liste dynamique) ===== */
+.room-card{border:1.5px solid var(--line);border-radius:9px;padding:14px;margin-bottom:12px;background:#fff;}
+.room-card-top{display:flex;align-items:center;justify-content:space-between;gap:10px;}
+.room-card-top h4{margin:0;font-size:15px;color:var(--navy);}
+.room-meta{font-size:11.5px;color:var(--text-soft);margin-top:2px;}
+
+/* ===== Signature ===== */
+.sigbox{border:1.5px solid var(--line);border-radius:9px;background:#fff;touch-action:none;width:100%;height:160px;}
+.sig-actions{display:flex;gap:8px;margin-top:8px;}
+
+/* ===== Footer nav fixe ===== */
+.bottombar{
+  position:fixed;left:0;right:0;bottom:0;background:#fff;border-top:1px solid var(--line);
+  padding:10px 16px;display:flex;gap:10px;justify-content:space-between;align-items:center;z-index:40;
+  box-shadow:0 -2px 10px rgba(20,30,50,.07);
+}
+.bottombar-info{font-size:11.5px;color:var(--text-soft);}
+
+/* ===== Toast ===== */
+#toast{
+  position:fixed;bottom:78px;left:50%;transform:translateX(-50%) translateY(20px);
+  background:var(--navy);color:#fff;padding:10px 18px;border-radius:8px;font-size:13px;font-weight:600;
+  opacity:0;transition:opacity .25s, transform .25s;z-index:100;pointer-events:none;max-width:90%;text-align:center;
+  box-shadow:0 4px 14px rgba(0,0,0,.2);
+}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+
+/* ===== Modal générique ===== */
+.modal-overlay{
+  position:fixed;inset:0;background:rgba(15,20,30,.55);display:none;align-items:center;justify-content:center;
+  z-index:200;padding:20px;
+}
+.modal-overlay.show{display:flex;}
+.modal-box{background:#fff;border-radius:11px;max-width:480px;width:100%;max-height:85vh;overflow-y:auto;padding:22px;}
+.modal-box h3{margin:0 0 10px;color:var(--navy);font-size:17px;}
+.modal-box p{font-size:13.5px;color:var(--text-soft);margin:0 0 16px;}
+.modal-actions{display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap;}
+
+.help-pill{display:inline-block;background:#eef1f5;color:var(--text-soft);font-size:10.5px;font-weight:700;
+  padding:2px 8px;border-radius:10px;margin-left:6px;vertical-align:middle;}
+
+.empty-state{text-align:center;padding:30px 14px;color:var(--text-soft);}
+.empty-state .plus-big{font-size:34px;color:var(--gold);}
+
+.legend-note{font-size:11.5px;color:var(--text-soft);background:#f6f4ec;border:1px solid var(--gold-light);
+  border-radius:8px;padding:10px 12px;margin-bottom:16px;}
+
+.photo-hint{font-size:11.5px;color:var(--gold);font-weight:600;margin:0 0 6px;}
+
+@media print{
+  .topbar,.bottombar,.section-nav,#toast,.modal-overlay{display:none !important;}
+  .shell{padding-bottom:0;}
+}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="topbar-inner">
+    <div class="brand">
+      <div class="brand-mark">47</div>
+      <div class="brand-text">
+        <h1>État des lieux technique contradictoire</h1>
+        <p id="brandSub">CEL-47 — Cabinet d'expertise · Laplume (47310)</p>
+      </div>
+    </div>
+    <div class="topbar-actions">
+      <button class="btn btn-ghost btn-sm" id="btnRestart" type="button">Nouveau</button>
+      <button class="btn btn-gold btn-sm" id="btnExportMenu" type="button">Exporter</button>
+    </div>
+  </div>
+  <div class="progress-wrap">
+    <div class="progress-track"><div class="progress-fill" id="progressFill" style="width:0%"></div></div>
+    <div class="progress-label" id="progressLabel">0 % complété</div>
+  </div>
+</div>
+
+<div class="shell">
+  <div class="section-nav" id="sectionNav"></div>
+  <div id="appRoot"></div>
+</div>
+
+<div class="bottombar">
+  <div class="bottombar-info" id="footerInfo">Brouillon enregistré automatiquement sur cet appareil</div>
+  <div style="display:flex;gap:8px;">
+    <button class="btn btn-line btn-sm" id="btnPrevSection" type="button">◀ Section préc.</button>
+    <button class="btn btn-line btn-sm" id="btnNextSection" type="button">Section suiv. ▶</button>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal-box" id="modalBox"></div>
+</div>
+
+<input type="file" id="hiddenFileImport" accept="application/json" style="display:none;">
+
+<script>
+/* ============================================================================
+   CEL-47 — État des lieux technique contradictoire
+   Référentiel de données (catalogue des pièces et éléments)
+   Architecture : application HTML autonome, sans dépendance externe.
+   Principes de compatibilité (retour d'expérience CEL47_V4) :
+     - Aucune navigation par pagination : défilement mono-page.
+     - Aucun élément interactif en <div> : uniquement <button>, <input>,
+       <select>, <textarea>, <label>.
+     - Construction du DOM par createElement/appendChild (jamais innerHTML
+       pour les parties interactives).
+     - Tous les événements attachés via addEventListener.
+   ========================================================================== */
+
+"use strict";
+
+/* ---------- Échelles de qualification communes ---------- */
+
+const ETAT_USURE = ["Bon état", "État d'usage", "Dégradé", "Hors d'usage"];
+const MENAGE = ["Propre", "Moyen", "Sale", "Très sale / encrassé"];
+const FONCTIONNEMENT = ["Fonctionnel", "Fonctionnement dégradé", "Non fonctionnel", "Non testé / non accessible"];
+const AMPLEUR = [
+  { v: "0", l: "0 % — Aucun désordre" },
+  { v: "25", l: "25 % — Désordres ponctuels / isolés" },
+  { v: "50", l: "50 % — Désordres importants" },
+  { v: "100", l: "100 % — Désordres généralisés" }
+];
+
+/* ---------- Définition d'un élément type de fiche EDL ----------
+   Chaque "elem" décrit un composant physique d'une pièce (sol, mur,
+   plafond, équipement...). Champs alignés sur le référentiel
+   "EXPERTISE EDL" du cabinet (Nature / Consistance / Destination /
+   État d'usure / Ménage / Couleur / Fonctionnement / Observations
+   + ampleur du désordre + photos), avec option "absent / sans objet".
+------------------------------------------------------------------ */
+
+function elem(key, label, opts) {
+  opts = opts || {};
+  return {
+    key: key,
+    label: label,
+    hasFonctionnement: opts.fonctionnement !== false, // par défaut true
+    hasCouleur: !!opts.couleur,
+    natureHint: opts.natureHint || "",
+    majeur: !!opts.majeur // élément "majeur" au sens grille ANAH (impact fort sur dégradation)
+  };
+}
+
+/* ============================================================
+   CATALOGUE DES PIÈCES (gabarits applicables à chaque pièce créée)
+   ============================================================ */
+
+const ROOM_TEMPLATES = {
+
+  sejour: {
+    label: "Pièce de vie / Séjour / Chambre",
+    icon: "🛏️",
+    elements: [
+      elem("sol", "Sol", { natureHint: "carrelage, parquet, stratifié, PVC, moquette, béton… (noter aussi tout affaissement, dévers ou désolidarisation du plancher)", majeur: true }),
+      elem("plinthes", "Plinthes"),
+      elem("placard", "Placard / rangements fixes"),
+      elem("murs", "Murs", { couleur: true, majeur: true }),
+      elem("plafond", "Plafond", { couleur: true, majeur: true }),
+      elem("radiateur", "Radiateur / appareil de chauffage", { majeur: true }),
+      elem("ventilation", "Ventilation (bouche VMC / grille / entrée d'air)", { majeur: true }),
+      elem("porte_palliere", "Porte palière vers l'extérieur (si présente)"),
+      elem("fenetre", "Fenêtre(s)", { majeur: true }),
+      elem("garde_corps_fenetre", "Garde-corps / barre d'appui (fenêtre à allège basse, si présente)",
+        { natureHint: "hauteur de protection mesurée ou estimée (repère NF P 01-012 : ≥ 1,00 m), plein ou ajouré, fixation au mur ou au dormant, jeu au toucher…", fonctionnement: false, majeur: true }),
+      elem("porte_fenetre", "Porte-fenêtre (si présente)"),
+      elem("garde_corps_balcon", "Garde-corps de balcon / loggia (si accès extérieur en hauteur)",
+        { natureHint: "hauteur ≥ 1,00 m, continuité de la protection, état de fixation, corrosion…", fonctionnement: false, majeur: true }),
+      elem("porte_int", "Porte intérieure"),
+      elem("volet", "Volets roulants / battants",
+        { natureHint: "type, matériau ; si peinture ancienne sur volets battants en bâti antérieur à 1949, noter précisément l'état (écaillement, cloques, friabilité)" }),
+      elem("rideaux", "Rideaux et supports", { fonctionnement: false }),
+      elem("interrupteurs", "Interrupteurs"),
+      elem("prises", "Prises de courant"),
+      elem("prise_tv", "Prise TV (si présente)"),
+      elem("prise_rj45", "Prise informatique RJ45 (si présente)"),
+      elem("plafonnier", "Plafonnier / point lumineux principal"),
+      elem("appliques", "Appliques murales (si présentes)")
+    ]
+  },
+
+  cuisine: {
+    label: "Cuisine / Coin cuisine",
+    icon: "🍳",
+    elements: [
+      elem("sol", "Sol", { natureHint: "noter aussi tout affaissement, dévers ou désolidarisation du plancher", majeur: true }),
+      elem("plinthes", "Plinthes"),
+      elem("placard_entree", "Placard / rangement non-cuisine (si présent)"),
+      elem("murs", "Murs / crédence", { couleur: true, majeur: true }),
+      elem("plafond", "Plafond", { couleur: true, majeur: true }),
+      elem("radiateur", "Radiateur / appareil de chauffage", { majeur: true }),
+      elem("ventilation", "Ventilation cuisine (VMC / grille)", { majeur: true }),
+      elem("porte_palliere", "Porte palière vers l'extérieur (si présente)"),
+      elem("fenetre", "Fenêtre"),
+      elem("porte_fenetre", "Porte-fenêtre (si présente)"),
+      elem("garde_corps_balcon", "Garde-corps de balcon / loggia (si accès extérieur en hauteur)",
+        { natureHint: "hauteur ≥ 1,00 m, continuité de la protection, état de fixation, corrosion…", fonctionnement: false, majeur: true }),
+      elem("porte_int", "Porte intérieure (vers séjour / couloir)"),
+      elem("volet", "Volets roulants",
+        { natureHint: "type, matériau ; si peinture ancienne en bâti antérieur à 1949, noter précisément l'état (écaillement, cloques, friabilité)" }),
+      elem("rideaux", "Rideaux et supports", { fonctionnement: false }),
+      elem("interrupteurs", "Interrupteurs"),
+      elem("prises_generales", "Prises de courant générales"),
+      elem("prises_electromenager", "Prises dédiées électroménager"),
+      elem("plafonnier", "Plafonnier"),
+      elem("autres_lumineux", "Autres points lumineux (appliques, réglettes)"),
+      elem("evier", "Évier + robinetterie", { majeur: true }),
+      elem("meuble_sous_evier", "Meuble sous-évier"),
+      elem("rangements_bas", "Rangements bas (tiroirs / portes)"),
+      elem("rangements_hauts", "Rangements hauts"),
+      elem("plaque_cuisson", "Plaque de cuisson (gaz / électrique / induction)"),
+      elem("four", "Four encastré / posé (si présent)"),
+      elem("micro_ondes", "Micro-ondes (si présent)"),
+      elem("hotte", "Hotte de cuisine"),
+      elem("refrigerateur", "Réfrigérateur / congélateur (si fourni)"),
+      elem("lave_vaisselle", "Lave-vaisselle (si fourni)")
+    ]
+  },
+
+  sdb: {
+    label: "Salle de bains / Salle d'eau / WC",
+    icon: "🚿",
+    elements: [
+      elem("sol", "Sol", { natureHint: "noter aussi tout affaissement, dévers ou désolidarisation du plancher", majeur: true }),
+      elem("plinthes", "Plinthes / bas de murs"),
+      elem("placard", "Placard / rangements fixes (si présent)"),
+      elem("murs", "Murs", { couleur: true, majeur: true }),
+      elem("plafond", "Plafond", { couleur: true, majeur: true }),
+      elem("radiateur", "Radiateur / sèche-serviettes", { majeur: true }),
+      elem("ventilation", "Ventilation (VMC / grille / entrée d'air)", { majeur: true }),
+      elem("porte_int", "Porte intérieure"),
+      elem("fenetre", "Fenêtre (si présente)"),
+      elem("garde_corps_fenetre", "Garde-corps / barre d'appui (fenêtre à allège basse, si présente)",
+        { natureHint: "hauteur de protection mesurée ou estimée (repère NF P 01-012 : ≥ 1,00 m), état de fixation…", fonctionnement: false, majeur: true }),
+      elem("volet_store", "Volets / stores / rideaux",
+        { fonctionnement: false, natureHint: "si volets battants peints en bâti antérieur à 1949, noter précisément l'état de la peinture (écaillement, cloques, friabilité)" }),
+      elem("interrupteurs", "Interrupteurs"),
+      elem("prises", "Prises de courant (et prise rasoir si présente)"),
+      elem("plafonnier", "Plafonnier"),
+      elem("appliques_miroir", "Appliques / éclairage miroir"),
+      elem("lavabo", "Lavabo / meuble-vasque", { majeur: true }),
+      elem("meuble_sous_vasque", "Meuble sous vasque (si présent)"),
+      elem("douche", "Cabine de douche (si présente)", { majeur: true }),
+      elem("baignoire", "Baignoire (si présente)", { majeur: true }),
+      elem("wc", "WC (cuvette, abattant, réservoir)", { majeur: true }),
+      elem("lave_mains", "Lave-mains (si WC séparé)")
+    ]
+  },
+
+  garage: {
+    label: "Garage / Cave / Cellier",
+    icon: "🧰",
+    elements: [
+      elem("sol", "Sol (brut ou fini)", { natureHint: "noter aussi tout affaissement, dévers ou désolidarisation visible du sol", majeur: true }),
+      elem("pieds_murs", "Pieds de murs / liaison sol-mur (traces d'humidité)"),
+      elem("murs", "Murs", { majeur: true }),
+      elem("plafond", "Plafond / voûte"),
+      elem("porte_garage", "Porte de garage (si présente)", { majeur: true }),
+      elem("porte_service", "Porte de service / porte de cave"),
+      elem("soupiraux", "Soupiraux / petites fenêtres"),
+      elem("ventilation", "Ventilation (grilles hautes/basses)", { majeur: true }),
+      elem("eclairage", "Éclairage (point(s) lumineux)"),
+      elem("interrupteurs_prises", "Interrupteurs et prises"),
+      elem("compteurs", "Compteurs (eau / gaz / électricité)"),
+      elem("equip_techniques", "Équipements techniques (chaudière, ballon, cuve, etc.)"),
+      elem("escalier", "Escalier d'accès (si inclus dans la pièce)"),
+      elem("garde_corps_escalier", "Garde-corps / main courante de l'escalier d'accès (si présent)",
+        { natureHint: "hauteur ≥ 1,00 m, continuité, fixation, jeu au toucher…", fonctionnement: false, majeur: true }),
+      elem("encombrement", "Stockage / encombrement", { fonctionnement: false })
+    ]
+  },
+
+  communs: {
+    label: "Parties communes / Extérieur / Accès",
+    icon: "🏢",
+    elements: [
+      elem("acces", "Accès au logement / portail / circulation"),
+      elem("escalier_commun", "Escalier commun / circulation verticale", { majeur: true }),
+      elem("garde_corps_communs", "Garde-corps des circulations communes (escaliers, paliers, coursives, balcons communs)",
+        { natureHint: "hauteur ≥ 1,00 m (NF P 01-012), continuité de la protection sur tout le parcours, fixation, absence de jeu…", fonctionnement: false, majeur: true }),
+      elem("ascenseur", "Ascenseur (si présent)"),
+      elem("eclairage_commun", "Éclairage des parties communes"),
+      elem("boites_lettres", "Boîtes aux lettres"),
+      elem("toiture_visible", "Toiture / couverture (vue depuis l'extérieur)", { majeur: true }),
+      elem("facade", "Façade(s) visible(s)", { majeur: true }),
+      elem("gouttieres", "Gouttières et descentes d'eaux pluviales"),
+      elem("cour_jardin", "Cour / jardin / espace extérieur privatif"),
+      elem("local_dechets", "Local poubelles / vide-ordures (si présent)"),
+      elem("tableau_general", "Tableau électrique général / colonne montante", { majeur: true }),
+      elem("compteurs_communs", "Compteurs (situés en parties communes)")
+    ]
+  }
+};
+
+/* ============================================================
+   RÉSEAUX ET ÉQUIPEMENTS GÉNÉRAUX DU LOGEMENT (saisie unique,
+   non répétée pièce par pièce) — alimentation eau, électricité,
+   gaz, chauffage général, production ECS, sécurité incendie.
+   ============================================================ */
+
+const RESEAUX_GENERAUX = [
+  {
+    key: "eau_potable",
+    label: "Alimentation en eau potable",
+    questions: [
+      { key: "acces", label: "Accès à l'eau potable à l'intérieur du logement", type: "seg", options: ["Oui, privatif", "Partagé / extérieur", "Absent"] },
+      { key: "pression", label: "Pression et débit", type: "seg", options: ["Normaux", "Insuffisants", "Non testés"] },
+      { key: "continuite", label: "Continuité de la distribution", type: "seg", options: ["Continue", "Coupures fréquentes signalées", "Non renseigné"] },
+      { key: "etat_reseau", label: "État apparent des canalisations visibles", type: "seg", options: ["Bon état", "Vétusté visible", "Non visible / non accessible"] },
+      { key: "obs", label: "Observations", type: "textarea" }
+    ]
+  },
+  {
+    key: "evacuation_eu",
+    label: "Évacuation des eaux usées",
+    questions: [
+      { key: "presence", label: "Évacuations raccordées (évier, lavabo, douche/baignoire, WC)", type: "seg", options: ["Toutes raccordées", "Raccordement partiel", "Non raccordé"] },
+      { key: "ecoulement", label: "Écoulement observé", type: "seg", options: ["Normal", "Lent / refoulement", "Bouché", "Non testé"] },
+      { key: "odeurs", label: "Odeurs / remontées constatées", type: "seg", options: ["Aucune", "Ponctuelles", "Permanentes"] },
+      { key: "obs", label: "Observations", type: "textarea" }
+    ]
+  },
+  {
+    key: "electricite_generale",
+    label: "Installation électrique générale (tableau, circuits)",
+    questions: [
+      { key: "tableau", label: "Tableau électrique", type: "seg", options: ["Présent et accessible", "Présent, accès limité", "Non localisé / absent"] },
+      { key: "protection_diff", label: "Dispositif de protection différentielle visible", type: "seg", options: ["Visible et identifié", "Absence constatée", "Non vérifiable"] },
+      { key: "etat_appareillage", label: "État apparent de l'appareillage (prises, interrupteurs)", type: "seg", options: ["Bon état général", "Dégradations ponctuelles", "Dégradations généralisées"] },
+      { key: "indices_danger", label: "Indices visibles de danger (fils apparents, bricolage)", type: "seg", options: ["Aucun indice visible", "Indices ponctuels", "Indices multiples"] },
+      { key: "obs", label: "Observations / localisation des désordres", type: "textarea" }
+    ]
+  },
+  {
+    key: "gaz",
+    label: "Installation gaz (si présente)",
+    questions: [
+      { key: "presence", label: "Présence d'une installation gaz", type: "seg", options: ["Oui", "Non", "Non vérifiable"] },
+      { key: "etat_appareils", label: "État apparent des appareils utilisant le gaz", type: "seg", options: ["Bon état", "Vétusté visible", "Sans objet"] },
+      { key: "ventilation_locaux", label: "Ventilation des locaux abritant les appareils à gaz", type: "seg", options: ["Présente et fonctionnelle", "Insuffisante", "Absente", "Sans objet"] },
+      { key: "obs", label: "Observations", type: "textarea" }
+    ]
+  },
+  {
+    key: "chauffage_general",
+    label: "Chauffage du logement",
+    questions: [
+      { key: "type", label: "Type de chauffage", type: "text", placeholder: "Ex. : individuel électrique, collectif gaz, chaudière fioul…" },
+      { key: "fonctionnement", label: "Fonctionnement constaté", type: "seg", options: FONCTIONNEMENT },
+      { key: "suffisance", label: "Capacité apparente à chauffer l'ensemble des pièces", type: "seg", options: ["Suffisante", "Partielle (pièces non couvertes)", "Insuffisante / hors service"] },
+      { key: "obs", label: "Observations", type: "textarea" }
+    ]
+  },
+  {
+    key: "ecs",
+    label: "Production d'eau chaude sanitaire",
+    questions: [
+      { key: "type", label: "Type de production", type: "text", placeholder: "Ex. : ballon électrique, chaudière, instantané gaz…" },
+      { key: "fonctionnement", label: "Fonctionnement constaté", type: "seg", options: FONCTIONNEMENT },
+      { key: "obs", label: "Observations", type: "textarea" }
+    ]
+  },
+  {
+    key: "secu_incendie",
+    label: "Sécurité incendie",
+    questions: [
+      { key: "detecteur_fumee", label: "Détecteur de fumée (DAAF)", type: "seg", options: ["Présent et fonctionnel", "Présent, fonctionnement non vérifié", "Absent"] },
+      { key: "issues", label: "Issues / dégagements praticables", type: "seg", options: ["Dégagés", "Partiellement encombrés", "Obstrués"] },
+      { key: "obs", label: "Observations", type: "textarea" }
+    ]
+  }
+];
+
+/* ============================================================
+   GRILLE DE DÉCENCE (décret n°2002-120 du 30 janvier 2002)
+   — synthèse de conformité, en complément du constat pièce par
+   pièce, pour rattacher les observations aux critères légaux.
+   ============================================================ */
+
+const CRITERES_DECENCE = [
+  { key: "surface", label: "Surface et volume habitables (loi n°89-462, art. 6 ; décret n°2002-120, art. 4)", desc: "Au moins une pièce principale ayant soit une surface habitable au moins égale à 9 m² et une hauteur sous plafond au moins égale à 2,20 m, soit un volume habitable au moins égal à 20 m³." },
+  { key: "securite_solidite", label: "Sécurité physique et solidité du bâti", desc: "Absence de risques manifestes pouvant porter atteinte à la sécurité physique ou à la santé (clos et couvert, sécurité des évacuations, équipements de garde-corps, fissures structurelles, affaissements)." },
+  { key: "equipements_essentiels", label: "Équipements et confort minimal", desc: "Installation permettant un chauffage normal, alimentation en eau potable, évacuation des eaux usées, cuisine ou coin cuisine aménagé, installation sanitaire intérieure (WC, douche ou bain) avec eau chaude/froide." },
+  { key: "electricite_gaz_securite", label: "Sécurité des installations électriques et de gaz", desc: "Installations conformes aux exigences réglementaires permettant un usage normal et sans risque." },
+  { key: "aeration", label: "Aération et ventilation", desc: "Dispositif d'ouverture et de ventilation des logements adapté aux caractéristiques du logement." },
+  { key: "luminosite", label: "Éclairement naturel / ouverture sur l'extérieur", desc: "Au moins une pièce principale disposant d'un éclairement naturel suffisant et d'un ouvrant donnant à l'air libre ou sur un volume vitré donnant à l'air libre." },
+  { key: "performance_energetique", label: "Performance énergétique minimale", desc: "Le logement doit présenter une performance énergétique minimale conforme aux seuils réglementaires en vigueur (consommation en énergie finale par m² et par an)." },
+  { key: "nuisibles_parasites", label: "Absence d'infestation par des espèces nuisibles et parasites", desc: "Le logement doit être exempt de toute infestation manifeste par des insectes ou nuisibles (selon les évolutions réglementaires applicables)." }
+];
+
+/* ============================================================
+   CRITÈRES D'INSALUBRITÉ (Code de la santé publique, art.
+   L.1331-22 et suivants) — utilisés pour qualifier, le cas
+   échéant, les désordres constatés, sans préjuger de la décision
+   de l'autorité compétente (ARS / mairie / préfecture).
+   ============================================================ */
+
+const CRITERES_INSALUBRITE = [
+  { key: "humidite", label: "Humidité, infiltrations, remontées capillaires" },
+  { key: "moisissures", label: "Présence de moisissures / contamination fongique" },
+  { key: "ventilation_insuffisante", label: "Ventilation générale insuffisante ou inexistante" },
+  { key: "absence_eau", label: "Absence ou insuffisance d'alimentation en eau potable" },
+  { key: "absence_evacuation", label: "Absence ou défaut d'évacuation des eaux usées" },
+  { key: "installation_elec_dangereuse", label: "Installation électrique dangereuse" },
+  { key: "installation_gaz_dangereuse", label: "Installation gaz dangereuse" },
+  { key: "monoxyde_carbone", label: "Risque d'intoxication au monoxyde de carbone (appareils à combustion suspects, occupants incommodés)" },
+  { key: "chauffage_absent", label: "Absence ou insuffisance de chauffage" },
+  { key: "surpopulation", label: "Surpeuplement manifeste au regard de la surface" },
+  { key: "structure", label: "Atteinte à la solidité du bâti (fissures, affaissements)" },
+  { key: "amiante", label: "Risque de présence d'amiante (matériaux friables ou dégradés, bâti antérieur à 1997)" },
+  { key: "nuisibles", label: "Présence de nuisibles (rongeurs, insectes)" },
+  { key: "securite_incendie", label: "Absence de dispositif de sécurité incendie" }
+];
+
+/* ============================================================
+   CONSTAT DE RISQUE D'EXPOSITION AU PLOMB (CREP) — logique dédiée
+   Le risque plomb (peintures anciennes) répond à une logique propre,
+   distincte du repérage amiante : il dépend de la combinaison de
+   trois conditions (CSP, art. R.1331-24 ; obligation de CREP pour tout
+   logement construit avant le 1er janvier 1949 et/ou mis en location
+   après le 12 août 2008) :
+     1) le logement est antérieur à 1949 (ou la date de construction
+        n'est pas connue avec certitude) ;
+     2) une dégradation de peinture est effectivement constatée lors
+        de la visite (écaillement, cloques, friabilité), typiquement
+        sur les volets, fenêtres, portes ou plinthes anciennes ;
+     3) un mineur de moins de 6 ans réside dans le logement.
+   Ce bloc ne se substitue pas à un CREP réglementaire réalisé par un
+   diagnostiqueur certifié : il documente le constat visuel effectué
+   lors de la présente visite, à recouper avec le CREP existant le
+   cas échéant (cf. rubrique « Diagnostics annexés »).
+   ============================================================ */
+
+/* ============================================================
+   PRÉCARITÉ ÉNERGÉTIQUE (repérage, grilles CAF) — axe distinct des
+   critères de décence/insalubrité au sens strict, mais régulièrement
+   documenté dans les grilles de visite de référence du cabinet.
+   ============================================================ */
+const CRITERES_PRECARITE = [
+  { key: "difficulte_paiement", label: "Difficulté déclarée à payer les factures d'eau et/ou d'électricité" },
+  { key: "inconfort_thermique", label: "Inconfort thermique signalé (sensation de froid en hiver et/ou de chaleur excessive en été)" },
+  { key: "isolation_insuffisante", label: "Isolation thermique apparente insuffisante (déperditions visibles, ponts thermiques)" },
+  { key: "chauffage_appoint_palliatif", label: "Recours à un chauffage d'appoint comme palliatif à un chauffage fixe insuffisant ou hors service" }
+];
+
+/* ============================================================
+   Échelle de gravité utilisée pour les critères de décence /
+   insalubrité (indépendante de l'échelle ANAH appliquée aux
+   éléments physiques de chaque pièce).
+   ============================================================ */
+const GRAVITE_CRITERE = ["Conforme", "Réserve à signaler", "Non conforme", "Non vérifié / sans objet"];
+
+/* ============================================================================
+   ÉTAT DE L'APPLICATION
+   ============================================================================ */
+
+const STORAGE_KEY = "cel47_edl_draft_v1";
+
+function emptyState() {
+  return {
+    meta: {
+      reference_mission: "",
+      type_intervention: "",          // ex: État des lieux d'entrée, de sortie, expertise contradictoire...
+      date_visite: "",
+      heure_visite: "",
+      adresse: "",
+      complement_adresse: "",
+      code_postal: "",
+      ville: "",
+      annee_construction: "",
+      type_bien: "",                  // maison individuelle / appartement / immeuble collectif
+      surface_habitable: "",
+      nb_pieces_principales: "",
+      etage: "",
+      dpe_classe: "",
+      dpe_valeur: "",
+      // Qualification préalable du logement (avant détail pièce par pièce)
+      qualif_locaux_impropres: "",    // seg: voir QUALIF_LOCAUX_IMPROPRES_OPTIONS
+      locaux_impropres_observations: "",
+      // Diagnostics annexés au dossier (existants, le cas échéant)
+      diag_elec_date: "",
+      diag_elec_conclusions: "",
+      diag_gaz_date: "",
+      diag_gaz_conclusions: "",
+      crep_existant_date: "",         // CREP déjà réalisé et annexé au bail, si disponible
+      crep_existant_resultat: "",     // seg: Positif / Négatif / Non réalisé / Sans objet
+      amiante_existant_date: "",
+      amiante_existant_resultat: "",  // seg: Positif / Négatif / Non réalisé / Sans objet
+      erp_date: "",                   // État des Risques (art. 3-3 4° loi 89-462, art. L.125-5 Code de l'environnement)
+      erp_risques_identifies: "",
+      bailleur_nom: "",
+      bailleur_adresse: "",
+      bailleur_contact: "",
+      occupant_nom: "",
+      occupant_contact: "",
+      mandataire_nom: "",             // ex: agence, syndic
+      occupants: [],                  // [{id, nom, date_naissance}] — pour test plomb (mineur <6 ans) et repère de sur-occupation CAF
+      expert_nom: "",
+      expert_siret: "",
+      cabinet_nom: "CEL-47",
+      cabinet_adresse: "Laplume (47310)",
+      meteo: "",
+      temperature_ext: "",
+      hygrometrie: "",
+      thermometrie: "",
+      presence_parties: {
+        bailleur: false,
+        locataire: false,
+        mandataire: false,
+        tiers: false
+      },
+      presence_tiers_precision: "",
+      observations_generales: ""
+    },
+    reseaux: {},   // rempli dynamiquement par clé RESEAUX_GENERAUX
+    decence: {},   // rempli dynamiquement par clé CRITERES_DECENCE -> {gravite, obs}
+    insalubrite: {}, // rempli dynamiquement par clé CRITERES_INSALUBRITE -> {coche, obs}
+    precarite: {},   // rempli dynamiquement par clé CRITERES_PRECARITE -> {coche, obs}
+    plomb: {
+      // Constat de risque d'exposition au plomb réalisé lors de LA PRÉSENTE visite
+      // (distinct du CREP existant éventuellement annexé, cf. meta.crep_existant_*)
+      peinture_degradee_constatee: "", // seg: "Oui — dégradation constatée" / "Non — bon état ou absence" / "Non vérifié"
+      observations: "",
+      photos: []
+    },
+    rooms: [],     // [{id, templateKey, customLabel, elements:{elemKey:{...}}}]
+    reserves: [],  // [{id, titre, description, localisation, gravite, photos:[]}]
+    signatures: {
+      bailleur: null,
+      locataire: null,
+      expert: null
+    },
+    createdAt: null,
+    updatedAt: null
+  };
+}
+
+let STATE = null;
+let UI = {
+  activeSection: "identification",
+  openElemKeys: new Set() // clés "roomId::elemKey" actuellement dépliées
+};
+
+const SECTIONS = [
+  { key: "identification", label: "Identification" },
+  { key: "reseaux", label: "Réseaux & équipements" },
+  { key: "decence", label: "Critères de décence" },
+  { key: "insalubrite", label: "Indices d'insalubrité" },
+  { key: "pieces", label: "Inventaire des pièces" },
+  { key: "reserves", label: "Réserves & désordres" },
+  { key: "signatures", label: "Signatures & clôture" }
+];
+
+/* ---------- Persistance locale ---------- */
+
+function saveState() {
+  try {
+    STATE.updatedAt = new Date().toISOString();
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(STATE));
+    setFooterInfo("Brouillon enregistré automatiquement — " + formatDateTime(new Date()));
+  } catch (e) {
+    setFooterInfo("⚠ Enregistrement local indisponible (espace de stockage plein ou navigateur restreint).");
+  }
+}
+
+function loadState() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (parsed && parsed.meta) return parsed;
+    }
+  } catch (e) { /* ignore corrupted draft */ }
+  return null;
+}
+
+function clearState() {
+  try { localStorage.removeItem(STORAGE_KEY); } catch (e) {}
+}
+
+/* ---------- Utilitaires divers ---------- */
+
+function uid() {
+  return "id" + Math.random().toString(36).slice(2, 10) + Date.now().toString(36).slice(-4);
+}
+
+function formatDateTime(d) {
+  const p2 = n => String(n).padStart(2, "0");
+  return p2(d.getDate()) + "/" + p2(d.getMonth() + 1) + "/" + d.getFullYear() +
+    " à " + p2(d.getHours()) + ":" + p2(d.getMinutes());
+}
+
+function formatDateFR(isoDateStr) {
+  if (!isoDateStr) return "";
+  const parts = isoDateStr.split("-");
+  if (parts.length !== 3) return isoDateStr;
+  return parts[2] + "/" + parts[1] + "/" + parts[0];
+}
+
+/* ============================================================================
+   HELPERS — Constat plomb (CREP), occupants, repère de sur-occupation CAF
+   Ces fonctions sont des aides au constat ; elles n'emportent par
+   elles-mêmes aucune qualification juridique. Le résultat affiché reste
+   un repère destiné à éclairer l'expert et, le cas échéant, l'autorité
+   compétente, qui seule qualifie et décide.
+   ============================================================================ */
+
+/* Calcule l'âge en années pleines à la date du jour à partir d'une date de
+   naissance au format ISO (YYYY-MM-DD). Retourne null si la date est vide
+   ou invalide. */
+function ageFromDateNaissance(isoDateStr) {
+  if (!isoDateStr) return null;
+  const dn = new Date(isoDateStr);
+  if (isNaN(dn.getTime())) return null;
+  const now = new Date();
+  let age = now.getFullYear() - dn.getFullYear();
+  const monthDiff = now.getMonth() - dn.getMonth();
+  if (monthDiff < 0 || (monthDiff === 0 && now.getDate() < dn.getDate())) age--;
+  return age;
+}
+
+/* Détermine si le bâti est antérieur à 1949 à partir du champ
+   "année de construction" déclaré. Retourne true/false si l'année est
+   exploitable, ou null si elle est absente ou non numérique (inconnue). */
+function batiAvant1949() {
+  const annee = parseInt(STATE.meta.annee_construction, 10);
+  if (isNaN(annee) || STATE.meta.annee_construction === "") return null;
+  return annee < 1949;
+}
+
+/* Détermine si au moins un occupant déclaré a moins de 6 ans à la date du
+   jour. Retourne true/false si l'information est exploitable pour tous les
+   occupants déclarés, ou null si aucun occupant n'est renseigné ou si une
+   date de naissance manque pour au moins un occupant (information incomplète). */
+function presenceMineurMoins6Ans() {
+  const occupants = STATE.meta.occupants || [];
+  if (occupants.length === 0) return null;
+  let hasUnknown = false;
+  let hasMineur = false;
+  occupants.forEach(o => {
+    const age = ageFromDateNaissance(o.date_naissance);
+    if (age === null) hasUnknown = true;
+    else if (age < 6) hasMineur = true;
+  });
+  if (hasMineur) return true;
+  if (hasUnknown) return null;
+  return false;
+}
+
+/* Synthétise le résultat du test de signalement CREP (CSP, art. R.1331-24)
+   à partir des trois conditions cumulatives : bâti avant 1949, dégradation
+   de peinture constatée lors de la visite, présence d'un mineur de moins
+   de 6 ans. Retourne une chaîne descriptive destinée à l'affichage, jamais
+   une qualification juridique définitive. */
+function crepSignalementStatus() {
+  const avant1949 = batiAvant1949();
+  const peintureDeg = STATE.plomb.peinture_degradee_constatee;
+  const mineur = presenceMineurMoins6Ans();
+
+  if (avant1949 === false) {
+    return { niveau: "non-concerne", texte: "Non concerné en l'état déclaré — bâti postérieur à 1949." };
+  }
+  if (peintureDeg === "Non — bon état ou absence") {
+    return { niveau: "non-concerne", texte: "Aucune dégradation de peinture constatée lors de la présente visite." };
+  }
+  if (avant1949 === true && peintureDeg === "Oui — dégradation constatée" && mineur === true) {
+    return { niveau: "positif", texte: "Signalement à envisager — les trois conditions de l'article R.1331-24 du CSP paraissent réunies (bâti avant 1949, dégradation constatée, présence d'un mineur de moins de 6 ans)." };
+  }
+  const manquants = [];
+  if (avant1949 === null) manquants.push("année de construction non renseignée");
+  if (!peintureDeg) manquants.push("constat de dégradation de peinture non renseigné");
+  if (mineur === null) manquants.push("composition du foyer non renseignée ou incomplète");
+  if (manquants.length > 0) {
+    return { niveau: "incomplet", texte: "Test non concluant en l'état — informations manquantes : " + manquants.join(", ") + "." };
+  }
+  return { niveau: "a-verifier", texte: "Conditions partiellement réunies — à apprécier au cas par cas par l'expert." };
+}
+
+/* Surface habitable repère selon la grille CAF de sur-occupation :
+   9 m² pour une personne isolée, 16 m² pour deux personnes, + 9 m² par
+   personne supplémentaire. Purement informatif, à comparer à la surface
+   habitable déclarée sans en tirer de conclusion automatique. */
+function surfaceRequiseCAF(nbOccupants) {
+  if (!nbOccupants || nbOccupants <= 0) return null;
+  if (nbOccupants === 1) return 9;
+  if (nbOccupants === 2) return 16;
+  return 16 + (nbOccupants - 2) * 9;
+}
+
+let toastTimer = null;
+function showToast(msg, duration) {
+  const t = document.getElementById("toast");
+  t.textContent = msg;
+  t.classList.add("show");
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove("show"), duration || 2200);
+}
+
+function setFooterInfo(text) {
+  const el = document.getElementById("footerInfo");
+  if (el) el.textContent = text;
+}
+
+/* ---------- Helpers de construction DOM (jamais d'innerHTML pour l'interactif) ---------- */
+
+function el(tag, attrs, children) {
+  const node = document.createElement(tag);
+  if (attrs) {
+    for (const k in attrs) {
+      if (k === "class") node.className = attrs[k];
+      else if (k === "text") node.textContent = attrs[k];
+      else if (k === "html_SAFE_STATIC_ONLY") node.innerHTML = attrs[k]; // réservé aux libellés statiques non interactifs
+      else if (k.startsWith("data-")) node.setAttribute(k, attrs[k]);
+      else node.setAttribute(k, attrs[k]);
+    }
+  }
+  if (children) {
+    (Array.isArray(children) ? children : [children]).forEach(c => {
+      if (c === null || c === undefined) return;
+      if (typeof c === "string") node.appendChild(document.createTextNode(c));
+      else node.appendChild(c);
+    });
+  }
+  return node;
+}
+
+function clearNode(node) {
+  while (node.firstChild) node.removeChild(node.firstChild);
+}
+
+/* Construit un champ texte standard, lié à un objet/clé donné, avec
+   sauvegarde automatique au "input" et au "blur". */
+function buildTextField(labelText, getValue, setValue, opts) {
+  opts = opts || {};
+  const wrap = el("div", { class: "field" });
+  wrap.appendChild(el("label", { text: labelText }));
+  let input;
+  if (opts.textarea) {
+    input = el("textarea", { rows: opts.rows || 3, placeholder: opts.placeholder || "" });
+  } else {
+    input = el("input", { type: opts.type || "text", placeholder: opts.placeholder || "" });
+  }
+  input.value = getValue() || "";
+  input.addEventListener("input", () => { setValue(input.value); });
+  input.addEventListener("blur", () => { saveState(); });
+  wrap.appendChild(input);
+  if (opts.hint) wrap.appendChild(el("span", { class: "hint", text: opts.hint }));
+  return wrap;
+}
+
+/* Construit un sélecteur "segmenté" (boutons natifs) pour choix unique. */
+function buildSegField(labelText, options, getValue, setValue, toneFn) {
+  const wrap = el("div", { class: "field" });
+  wrap.appendChild(el("label", { text: labelText }));
+  const seg = el("div", { class: "seg" });
+  options.forEach(opt => {
+    const value = typeof opt === "string" ? opt : opt.v;
+    const text = typeof opt === "string" ? opt : opt.l;
+    const btn = el("button", { type: "button", class: "seg-btn", text: text });
+    if (getValue() === value) {
+      btn.classList.add("sel");
+      if (toneFn) { const tone = toneFn(value); if (tone) btn.classList.add("tone-" + tone); }
+    }
+    btn.addEventListener("click", () => {
+      setValue(value);
+      saveState();
+      // re-render léger : on remet à jour les classes du groupe seg seulement
+      Array.from(seg.children).forEach(b => b.classList.remove("sel", "tone-ok", "tone-warn", "tone-bad"));
+      btn.classList.add("sel");
+      if (toneFn) { const tone = toneFn(value); if (tone) btn.classList.add("tone-" + tone); }
+      if (opt.onSelect) opt.onSelect();
+    });
+    seg.appendChild(btn);
+  });
+  wrap.appendChild(seg);
+  return wrap;
+}
+
+/* Construit une case à cocher native avec libellé. */
+function buildCheckline(labelText, getValue, setValue) {
+  const label = el("label", { class: "checkline" });
+  const input = el("input", { type: "checkbox", class: "checkbox-native" });
+  input.checked = !!getValue();
+  input.addEventListener("change", () => { setValue(input.checked); saveState(); });
+  label.appendChild(input);
+  label.appendChild(el("span", { text: labelText }));
+  return label;
+}
+
+/* ============================================================================
+   GESTION DES PHOTOS
+   Les photos sont compressées côté client (redimensionnement + JPEG) avant
+   stockage en base64 dans le state, afin de limiter l'empreinte mémoire
+   du localStorage et la taille des exports.
+   ============================================================================ */
+
+const PHOTO_MAX_DIM = 1280;
+const PHOTO_QUALITY = 0.72;
+
+function compressImageFile(file, callback) {
+  const reader = new FileReader();
+  reader.onload = function (e) {
+    const img = new Image();
+    img.onload = function () {
+      let w = img.width, h = img.height;
+      if (w > PHOTO_MAX_DIM || h > PHOTO_MAX_DIM) {
+        if (w >= h) { h = Math.round(h * PHOTO_MAX_DIM / w); w = PHOTO_MAX_DIM; }
+        else { w = Math.round(w * PHOTO_MAX_DIM / h); h = PHOTO_MAX_DIM; }
+      }
+      const canvas = document.createElement("canvas");
+      canvas.width = w; canvas.height = h;
+      const ctx = canvas.getContext("2d");
+      ctx.drawImage(img, 0, 0, w, h);
+      const dataUrl = canvas.toDataURL("image/jpeg", PHOTO_QUALITY);
+      callback(dataUrl);
+    };
+    img.onerror = function () { callback(null); };
+    img.src = e.target.result;
+  };
+  reader.onerror = function () { callback(null); };
+  reader.readAsDataURL(file);
+}
+
+/* Crée un champ de saisie fichier caché, préconfiguré pour ouvrir
+   directement l'appareil photo de l'appareil (capture="environment") et
+   compresser l'image avant de la transmettre au callback onCaptured.
+   L'input doit être inséré dans le DOM (même masqué via display:none) pour
+   garantir un déclenchement fiable de .click() sur l'ensemble des
+   navigateurs mobiles. Réutilisé par buildPhotoRow (rangée complète dans la
+   fiche dépliée) et buildQuickCameraButton (icône compacte sur l'en-tête). */
+function createPhotoCaptureInput(onCaptured) {
+  const fileInput = el("input", { type: "file", accept: "image/*", capture: "environment", style: "display:none;" });
+  fileInput.addEventListener("change", () => {
+    const file = fileInput.files && fileInput.files[0];
+    if (!file) return;
+    compressImageFile(file, dataUrl => {
+      if (dataUrl) {
+        onCaptured(dataUrl);
+      } else {
+        showToast("Impossible de charger cette image.");
+      }
+    });
+    fileInput.value = "";
+  });
+  return fileInput;
+}
+
+/* Construit un rang de miniatures + bouton d'ajout, relié à un tableau
+   `photosArray` (référence directe dans le state). */
+function buildPhotoRow(photosArray, onChange) {
+  const row = el("div", { class: "photo-row" });
+
+  function renderThumbs() {
+    clearNode(row);
+    photosArray.forEach((photo, idx) => {
+      const thumb = el("div", { class: "photo-thumb" });
+      const img = el("img", { src: photo.data, alt: "Photo " + (idx + 1) });
+      const rm = el("button", { type: "button", class: "rm", text: "✕" });
+      rm.addEventListener("click", () => {
+        photosArray.splice(idx, 1);
+        renderThumbs();
+        saveState();
+        if (onChange) onChange();
+      });
+      thumb.appendChild(img);
+      thumb.appendChild(rm);
+      row.appendChild(thumb);
+    });
+
+    const addBtn = el("button", { type: "button", class: "photo-add" });
+    addBtn.appendChild(el("span", { class: "plus", text: "+" }));
+    addBtn.appendChild(el("span", { text: "Photo" }));
+    const fileInput = createPhotoCaptureInput(dataUrl => {
+      photosArray.push({ data: dataUrl, ts: new Date().toISOString() });
+      renderThumbs();
+      saveState();
+      if (onChange) onChange();
+    });
+    addBtn.addEventListener("click", () => fileInput.click());
+    row.appendChild(addBtn);
+    row.appendChild(fileInput);
+  }
+
+  renderThumbs();
+  return row;
+}
+
+/* ============================================================================
+   RENDU — NAVIGATION DES SECTIONS
+   ============================================================================ */
+
+function renderSectionNav() {
+  const nav = document.getElementById("sectionNav");
+  clearNode(nav);
+  SECTIONS.forEach(sec => {
+    const chip = el("button", { type: "button", class: "navchip" });
+    if (sec.key === UI.activeSection) chip.classList.add("active");
+    if (sectionIsComplete(sec.key)) chip.classList.add("done");
+    chip.appendChild(el("span", { class: "dot" }));
+    chip.appendChild(document.createTextNode(sec.label));
+    chip.addEventListener("click", () => {
+      UI.activeSection = sec.key;
+      renderApp();
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    });
+    nav.appendChild(chip);
+  });
+}
+
+function sectionIsComplete(key) {
+  switch (key) {
+    case "identification":
+      return !!(STATE.meta.adresse && STATE.meta.date_visite && STATE.meta.type_bien);
+    case "reseaux":
+      return RESEAUX_GENERAUX.every(r => STATE.reseaux[r.key] && Object.keys(STATE.reseaux[r.key]).length > 0);
+    case "decence":
+      return CRITERES_DECENCE.every(c => STATE.decence[c.key] && STATE.decence[c.key].gravite);
+    case "insalubrite":
+      return true; // section informative, jamais bloquante
+    case "pieces":
+      return STATE.rooms.length > 0;
+    case "reserves":
+      return true;
+    case "signatures":
+      return !!(STATE.signatures.expert);
+    default:
+      return false;
+  }
+}
+
+function updateProgressBar() {
+  const total = SECTIONS.length;
+  const done = SECTIONS.filter(s => sectionIsComplete(s.key)).length;
+  const pct = Math.round((done / total) * 100);
+  document.getElementById("progressFill").style.width = pct + "%";
+  document.getElementById("progressLabel").textContent = pct + " % complété — " + done + "/" + total + " sections";
+}
+
+function gotoSection(delta) {
+  const idx = SECTIONS.findIndex(s => s.key === UI.activeSection);
+  const next = idx + delta;
+  if (next >= 0 && next < SECTIONS.length) {
+    UI.activeSection = SECTIONS[next].key;
+    renderApp();
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+}
+
+/* ============================================================================
+   RENDU PRINCIPAL — dispatch vers la bonne section
+   ============================================================================ */
+
+function renderApp() {
+  renderSectionNav();
+  updateProgressBar();
+  const root = document.getElementById("appRoot");
+  clearNode(root);
+
+  switch (UI.activeSection) {
+    case "identification": root.appendChild(renderIdentification()); break;
+    case "reseaux": root.appendChild(renderReseaux()); break;
+    case "decence": root.appendChild(renderDecence()); break;
+    case "insalubrite": root.appendChild(renderInsalubrite()); break;
+    case "pieces": root.appendChild(renderPieces()); break;
+    case "reserves": root.appendChild(renderReserves()); break;
+    case "signatures": root.appendChild(renderSignatures()); break;
+  }
+
+  const idx = SECTIONS.findIndex(s => s.key === UI.activeSection);
+  document.getElementById("btnPrevSection").disabled = idx <= 0;
+  document.getElementById("btnNextSection").disabled = idx >= SECTIONS.length - 1;
+}
+
+/* ============================================================================
+   SECTION — IDENTIFICATION
+   ============================================================================ */
+
+function renderIdentification() {
+  const card = el("div", { class: "card" });
+  card.appendChild(el("h2", { text: "Identification de la mission et du logement" }));
+  card.appendChild(el("p", { class: "subtitle",
+    text: "Ces informations figurent en en-tête du rapport et permettent de rattacher le constat à la mission, au bien et aux parties présentes." }));
+
+  const m = STATE.meta;
+
+  card.appendChild(el("h3", { text: "Mission" }));
+  const g1 = el("div", { class: "grid2" });
+  g1.appendChild(buildTextField("Référence / lettre de mission", () => m.reference_mission, v => m.reference_mission = v, { placeholder: "Ex. LM-2026-014" }));
+  g1.appendChild(buildTextField("Type d'intervention", () => m.type_intervention, v => m.type_intervention = v, { placeholder: "État des lieux d'entrée, de sortie, expertise contradictoire…" }));
+  card.appendChild(g1);
+  const g1b = el("div", { class: "grid2" });
+  g1b.appendChild(buildTextField("Date de la visite", () => m.date_visite, v => { m.date_visite = v; }, { type: "date" }));
+  g1b.appendChild(buildTextField("Heure de la visite", () => m.heure_visite, v => m.heure_visite = v, { placeholder: "Ex. 14h30" }));
+  card.appendChild(g1b);
+
+  card.appendChild(el("h3", { text: "Localisation du bien" }));
+  card.appendChild(buildTextField("Adresse", () => m.adresse, v => m.adresse = v, { placeholder: "N° et nom de voie" }));
+  card.appendChild(buildTextField("Complément d'adresse", () => m.complement_adresse, v => m.complement_adresse = v, { placeholder: "Bâtiment, escalier, étage, porte…" }));
+  const g2 = el("div", { class: "grid2" });
+  g2.appendChild(buildTextField("Code postal", () => m.code_postal, v => m.code_postal = v));
+  g2.appendChild(buildTextField("Ville", () => m.ville, v => m.ville = v));
+  card.appendChild(g2);
+
+  card.appendChild(el("h3", { text: "Caractéristiques du logement" }));
+  const g3 = el("div", { class: "grid3" });
+  g3.appendChild(buildTextField("Type de bien", () => m.type_bien, v => m.type_bien = v, { placeholder: "Maison individuelle, appartement, immeuble collectif…" }));
+  g3.appendChild(buildTextField("Année de construction (si connue)", () => m.annee_construction, v => m.annee_construction = v));
+  g3.appendChild(buildTextField("Étage", () => m.etage, v => m.etage = v));
+  card.appendChild(g3);
+  const g4 = el("div", { class: "grid2" });
+  g4.appendChild(buildTextField("Surface habitable déclarée (m²)", () => m.surface_habitable, v => m.surface_habitable = v, { type: "number" }));
+  g4.appendChild(buildTextField("Nombre de pièces principales", () => m.nb_pieces_principales, v => m.nb_pieces_principales = v, { type: "number" }));
+  card.appendChild(g4);
+  const g5 = el("div", { class: "grid2" });
+  g5.appendChild(buildTextField("Classe DPE (si communiquée)", () => m.dpe_classe, v => m.dpe_classe = v, { placeholder: "A à G" }));
+  g5.appendChild(buildTextField("Consommation DPE (kWhep/m².an)", () => m.dpe_valeur, v => m.dpe_valeur = v, { type: "number" }));
+  card.appendChild(g5);
+
+  card.appendChild(el("h3", { text: "Qualification préalable du logement" }));
+  card.appendChild(el("p", { class: "subtitle",
+    text: "À renseigner avant le détail pièce par pièce : ce point vise les locaux qui, par leur nature même (sous-sol, garage, abri de fortune…), peuvent être impropres à l'habitation indépendamment de leur état d'entretien." }));
+  card.appendChild(buildSegField("Locaux par nature potentiellement impropres à l'habitation",
+    ["Non concerné", "Point d'attention à signaler", "Non vérifié"],
+    () => m.qualif_locaux_impropres, v => m.qualif_locaux_impropres = v));
+  card.appendChild(buildTextField("Précision", () => m.locaux_impropres_observations, v => m.locaux_impropres_observations = v,
+    { textarea: true, rows: 2, placeholder: "Ex. : pièce visitée correspondant à un ancien garage non transformé, absence de fenêtre donnant à l'air libre…" }));
+
+  card.appendChild(el("h3", { text: "Diagnostics annexés au dossier (si disponibles)" }));
+  card.appendChild(el("p", { class: "subtitle",
+    text: "Diagnostics existants communiqués par le bailleur ou son mandataire avant la visite, indépendamment des constats réalisés ce jour." }));
+  const gDiagElec = el("div", { class: "grid2" });
+  gDiagElec.appendChild(buildTextField("Diagnostic électricité — date", () => m.diag_elec_date, v => m.diag_elec_date = v, { type: "date" }));
+  gDiagElec.appendChild(buildTextField("Diagnostic électricité — conclusions principales", () => m.diag_elec_conclusions, v => m.diag_elec_conclusions = v));
+  card.appendChild(gDiagElec);
+  const gDiagGaz = el("div", { class: "grid2" });
+  gDiagGaz.appendChild(buildTextField("Diagnostic gaz — date", () => m.diag_gaz_date, v => m.diag_gaz_date = v, { type: "date" }));
+  gDiagGaz.appendChild(buildTextField("Diagnostic gaz — conclusions principales", () => m.diag_gaz_conclusions, v => m.diag_gaz_conclusions = v));
+  card.appendChild(gDiagGaz);
+  const gCrepExistant = el("div", { class: "grid2" });
+  gCrepExistant.appendChild(buildTextField("CREP existant annexé au bail — date", () => m.crep_existant_date, v => m.crep_existant_date = v, { type: "date" }));
+  gCrepExistant.appendChild(buildSegField("CREP existant — résultat", ["Positif", "Négatif", "Non réalisé", "Sans objet"], () => m.crep_existant_resultat, v => m.crep_existant_resultat = v));
+  card.appendChild(gCrepExistant);
+  const gAmianteExistant = el("div", { class: "grid2" });
+  gAmianteExistant.appendChild(buildTextField("Repérage amiante existant — date", () => m.amiante_existant_date, v => m.amiante_existant_date = v, { type: "date" }));
+  gAmianteExistant.appendChild(buildSegField("Repérage amiante — résultat", ["Positif", "Négatif", "Non réalisé", "Sans objet"], () => m.amiante_existant_resultat, v => m.amiante_existant_resultat = v));
+  card.appendChild(gAmianteExistant);
+  const gErp = el("div", { class: "grid2" });
+  gErp.appendChild(buildTextField("État des risques (ERP) — date", () => m.erp_date, v => m.erp_date = v, { type: "date" }));
+  gErp.appendChild(buildTextField("État des risques (ERP) — risque(s) identifié(s)", () => m.erp_risques_identifies, v => m.erp_risques_identifies = v,
+    { placeholder: "Ex. : zone de sismicité modérée, aucun PPR ; ou « non concerné, hors périmètre »" }));
+  card.appendChild(gErp);
+
+  card.appendChild(el("h3", { text: "Conditions de la visite" }));
+  const g6 = el("div", { class: "grid3" });
+  g6.appendChild(buildTextField("Conditions météo", () => m.meteo, v => m.meteo = v, { placeholder: "Ensoleillé, pluvieux…" }));
+  g6.appendChild(buildTextField("Température extérieure (°C)", () => m.temperature_ext, v => m.temperature_ext = v, { type: "number" }));
+  g6.appendChild(el("div"));
+  card.appendChild(g6);
+  const g7 = el("div", { class: "grid2" });
+  g7.appendChild(buildTextField("Hygrométrie intérieure mesurée (%)", () => m.hygrometrie, v => m.hygrometrie = v, { type: "number", hint: "Mesure à l'hygromètre, pièce de référence." }));
+  g7.appendChild(buildTextField("Température intérieure mesurée (°C)", () => m.thermometrie, v => m.thermometrie = v, { type: "number" }));
+  card.appendChild(g7);
+
+  card.appendChild(el("h3", { text: "Parties présentes à la visite" }));
+  const presBox = el("div", { class: "grid2" });
+  presBox.appendChild(buildCheckline("Bailleur / propriétaire présent", () => m.presence_parties.bailleur, v => m.presence_parties.bailleur = v));
+  presBox.appendChild(buildCheckline("Locataire / occupant présent", () => m.presence_parties.locataire, v => m.presence_parties.locataire = v));
+  presBox.appendChild(buildCheckline("Mandataire (agence, syndic) présent", () => m.presence_parties.mandataire, v => m.presence_parties.mandataire = v));
+  presBox.appendChild(buildCheckline("Tiers présent", () => m.presence_parties.tiers, v => m.presence_parties.tiers = v));
+  card.appendChild(presBox);
+  card.appendChild(buildTextField("Précision sur le(s) tiers présent(s)", () => m.presence_tiers_precision, v => m.presence_tiers_precision = v, { placeholder: "Qualité, nom (facultatif)" }));
+
+  card.appendChild(el("h3", { text: "Identité des parties" }));
+  card.appendChild(buildTextField("Bailleur — nom / raison sociale", () => m.bailleur_nom, v => m.bailleur_nom = v));
+  const g8 = el("div", { class: "grid2" });
+  g8.appendChild(buildTextField("Bailleur — adresse", () => m.bailleur_adresse, v => m.bailleur_adresse = v));
+  g8.appendChild(buildTextField("Bailleur — contact", () => m.bailleur_contact, v => m.bailleur_contact = v, { placeholder: "Téléphone / e-mail" }));
+  card.appendChild(g8);
+  const g9 = el("div", { class: "grid2" });
+  g9.appendChild(buildTextField("Occupant — nom", () => m.occupant_nom, v => m.occupant_nom = v));
+  g9.appendChild(buildTextField("Occupant — contact", () => m.occupant_contact, v => m.occupant_contact = v));
+  card.appendChild(g9);
+  card.appendChild(buildTextField("Mandataire (le cas échéant)", () => m.mandataire_nom, v => m.mandataire_nom = v, { placeholder: "Agence, syndic, AMO…" }));
+
+  card.appendChild(el("h3", { text: "Occupants du logement" }));
+  card.appendChild(el("p", { class: "subtitle",
+    text: "Composition du foyer occupant réellement le logement, utile au repère de sur-occupation et à la vérification de l'exposition au plomb (présence d'un mineur de moins de 6 ans). Renseignement facultatif si non communiqué par les parties." }));
+  const occupantsList = el("div", {});
+  function renderOccupantsList() {
+    clearNode(occupantsList);
+    m.occupants.forEach((occ, idx) => {
+      const row = el("div", { class: "grid3", style: "align-items:flex-end;margin-bottom:4px;" });
+      row.appendChild(buildTextField("Nom (facultatif)", () => occ.nom, v => occ.nom = v, { placeholder: "Ex. : occupant 1" }));
+      row.appendChild(buildTextField("Date de naissance", () => occ.date_naissance, v => { occ.date_naissance = v; refreshSurfaceInfo(); }, { type: "date" }));
+      const rmBtn = el("button", { type: "button", class: "btn btn-danger btn-sm", text: "Retirer", style: "margin-bottom:13px;" });
+      rmBtn.addEventListener("click", () => {
+        m.occupants.splice(idx, 1);
+        saveState();
+        renderOccupantsList();
+        refreshSurfaceInfo();
+      });
+      row.appendChild(rmBtn);
+      occupantsList.appendChild(row);
+    });
+  }
+  renderOccupantsList();
+  card.appendChild(occupantsList);
+  const addOccBtn = el("button", { type: "button", class: "btn btn-line btn-sm", text: "+ Ajouter un occupant" });
+  addOccBtn.addEventListener("click", () => {
+    m.occupants.push({ id: uid(), nom: "", date_naissance: "" });
+    saveState();
+    renderOccupantsList();
+    refreshSurfaceInfo();
+  });
+  card.appendChild(addOccBtn);
+
+  const surfaceInfo = el("p", { class: "subtitle", style: "margin-top:10px;" });
+  function refreshSurfaceInfo() {
+    const n = m.occupants.length;
+    const requise = surfaceRequiseCAF(n);
+    if (n === 0 || requise === null) {
+      surfaceInfo.textContent = "Repère de surface (grille CAF) : ajoutez au moins un occupant pour afficher la comparaison.";
+    } else {
+      const declaree = m.surface_habitable ? parseFloat(m.surface_habitable) : null;
+      surfaceInfo.textContent = "Repère de surface (grille CAF) pour " + n + " occupant(s) : " + requise + " m² — Surface habitable déclarée : " +
+        (declaree !== null ? declaree + " m²" : "non renseignée") +
+        ". Comparaison purement informative ; elle n'emporte aucune qualification automatique.";
+    }
+  }
+  refreshSurfaceInfo();
+  card.appendChild(surfaceInfo);
+
+  card.appendChild(el("h3", { text: "Expert / technicien rédacteur" }));
+  const g10 = el("div", { class: "grid2" });
+  g10.appendChild(buildTextField("Nom de l'expert", () => m.expert_nom, v => m.expert_nom = v));
+  g10.appendChild(buildTextField("SIRET du cabinet", () => m.expert_siret, v => m.expert_siret = v));
+  card.appendChild(g10);
+  const g11 = el("div", { class: "grid2" });
+  g11.appendChild(buildTextField("Nom du cabinet", () => m.cabinet_nom, v => m.cabinet_nom = v));
+  g11.appendChild(buildTextField("Adresse du cabinet", () => m.cabinet_adresse, v => m.cabinet_adresse = v));
+  card.appendChild(g11);
+
+  card.appendChild(el("h3", { text: "Observations générales préliminaires" }));
+  card.appendChild(buildTextField("Observations", () => m.observations_generales, v => m.observations_generales = v,
+    { textarea: true, rows: 4, placeholder: "Contexte général de la visite, accès, éléments non visités ou non accessibles, réserves générales…" }));
+
+  return card;
+}
+
+/* ============================================================================
+   SECTION — RÉSEAUX & ÉQUIPEMENTS GÉNÉRAUX
+   ============================================================================ */
+
+function renderReseaux() {
+  const card = el("div", { class: "card" });
+  card.appendChild(el("h2", { text: "Réseaux et équipements généraux du logement" }));
+  card.appendChild(el("p", { class: "subtitle",
+    text: "Constat factuel des réseaux et équipements communs à l'ensemble du logement (eau, électricité, gaz, chauffage, eau chaude sanitaire, sécurité incendie)." }));
+
+  RESEAUX_GENERAUX.forEach(group => {
+    if (!STATE.reseaux[group.key]) STATE.reseaux[group.key] = {};
+    const data = STATE.reseaux[group.key];
+
+    card.appendChild(el("h3", { text: group.label }));
+    const box = el("div", {});
+    group.questions.forEach(q => {
+      if (q.type === "seg") {
+        box.appendChild(buildSegField(q.label, q.options, () => data[q.key], v => { data[q.key] = v; }, toneForGenericValue));
+      } else if (q.type === "textarea") {
+        box.appendChild(buildTextField(q.label, () => data[q.key], v => data[q.key] = v, { textarea: true, rows: 2, placeholder: "Localisation, ampleur, précisions…" }));
+      } else {
+        box.appendChild(buildTextField(q.label, () => data[q.key], v => data[q.key] = v, { placeholder: q.placeholder || "" }));
+      }
+    });
+    card.appendChild(box);
+  });
+
+  return card;
+}
+
+/* Détermine une teinte indicative (ok/warn/bad) pour des libellés
+   fréquents, afin d'aider visuellement la saisie sans porter de
+   jugement juridique — purement un repère de lecture pour l'expert. */
+function toneForGenericValue(value) {
+  const v = (value || "").toLowerCase();
+  const badWords = ["absent", "non fonctionnel", "insuffisant", "bouché", "dangereuse", "non conforme", "hors service", "obstrué", "non décent", "non conforme"];
+  const warnWords = ["partiel", "dégradé", "vétusté", "ponctuel", "douteuse", "ralenti", "lent", "limité", "insuffisante", "fonctionnement dégradé"];
+  const okWords = ["bon état", "fonctionnel", "présent", "conforme", "continue", "suffisante", "présente et fonctionnel", "dégagés", "normaux", "normal", "oui, privatif"];
+  if (badWords.some(w => v.includes(w))) return "bad";
+  if (warnWords.some(w => v.includes(w))) return "warn";
+  if (okWords.some(w => v.includes(w))) return "ok";
+  return null;
+}
+
+/* ============================================================================
+   SECTION — CRITÈRES DE DÉCENCE (décret n°2002-120 du 30 janvier 2002)
+   ============================================================================ */
+
+function renderDecence() {
+  const card = el("div", { class: "card" });
+  card.appendChild(el("h2", { text: "Critères de décence du logement" }));
+  card.appendChild(el("p", { class: "subtitle",
+    text: "Évaluation au regard des caractéristiques de décence définies par le décret n°2002-120 du 30 janvier 2002 et la loi n°89-462 du 6 juillet 1989, article 6. Cette grille constitue un repère de constat ; la qualification définitive relève de l'autorité compétente." }));
+
+  card.appendChild(el("div", { class: "legend-note",
+    text: "Pour chaque critère : indiquer l'état constaté (Conforme / Réserve à signaler / Non conforme / Non vérifié) et préciser les éléments d'observation. Les détails techniques par pièce sont renseignés dans la section « Inventaire des pièces »." }));
+
+  CRITERES_DECENCE.forEach(crit => {
+    if (!STATE.decence[crit.key]) STATE.decence[crit.key] = {};
+    const data = STATE.decence[crit.key];
+
+    const box = el("div", { class: "elem-card" });
+    const head = el("div", { class: "elem-head open" });
+    const left = el("div", { class: "elem-head-left" });
+    left.appendChild(el("span", { class: "elem-name", text: crit.label }));
+    head.appendChild(left);
+    box.appendChild(head);
+
+    const body = el("div", { class: "elem-body open" });
+    body.appendChild(el("p", { class: "subtitle", text: crit.desc, style: "margin-bottom:12px;" }));
+    body.appendChild(buildSegField("État constaté", GRAVITE_CRITERE, () => data.gravite, v => data.gravite = v, toneForGravite));
+    body.appendChild(buildTextField("Observations / éléments de constat", () => data.obs, v => data.obs = v, { textarea: true, rows: 2, placeholder: "Description factuelle, localisation, mesures éventuelles…" }));
+    box.appendChild(body);
+    card.appendChild(box);
+  });
+
+  return card;
+}
+
+function toneForGravite(value) {
+  if (value === "Conforme") return "ok";
+  if (value === "Réserve à signaler") return "warn";
+  if (value === "Non conforme") return "bad";
+  return null;
+}
+
+/* ============================================================================
+   SECTION — INDICES D'INSALUBRITÉ (CSP, art. L.1331-22 et suivants)
+   ============================================================================ */
+
+function renderInsalubrite() {
+  const card = el("div", { class: "card" });
+  card.appendChild(el("h2", { text: "Indices d'insalubrité, risque plomb et précarité énergétique" }));
+  card.appendChild(el("p", { class: "subtitle",
+    text: "Repérage des indices visibles susceptibles de relever des critères d'insalubrité au sens des articles L.1331-22 et suivants du Code de la santé publique, du risque d'exposition au plomb (art. R.1331-24) et de la précarité énergétique. Ce repérage est un outil de constat technique ; il ne constitue ni une qualification d'insalubrité, ni une décision administrative, lesquelles relèvent exclusivement de l'autorité compétente (ARS, mairie, préfecture)." }));
+
+  /* ---------- Bloc dédié : Constat de Risque d'Exposition au Plomb (CREP) ---------- */
+  const plombCard = el("div", { class: "elem-card" });
+  const plombHead = el("div", { class: "elem-head open" });
+  plombHead.appendChild(el("span", { class: "elem-name", text: "Constat de Risque d'Exposition au Plomb (CREP) — visite du jour" }));
+  plombCard.appendChild(plombHead);
+
+  const plombBody = el("div", { class: "elem-body open" });
+  plombBody.appendChild(el("p", { class: "subtitle",
+    text: "L'obligation de CREP s'applique à tout logement construit avant le 1er janvier 1949 et/ou mis en location après le 12 août 2008 (CSP, art. R.1331-24). Le signalement repose sur trois conditions cumulatives : bâti avant 1949, dégradation de peinture constatée, présence d'un mineur de moins de 6 ans." }));
+
+  const factsBox = el("div", { class: "grid2" });
+  const avant1949 = batiAvant1949();
+  factsBox.appendChild(el("div", { class: "field" }, [
+    el("label", { text: "Bâti antérieur à 1949 (d'après l'année de construction déclarée)" }),
+    el("p", { text: avant1949 === true ? "Oui" : avant1949 === false ? "Non" : "Non renseigné — à compléter en section Identification" })
+  ]));
+  const mineur = presenceMineurMoins6Ans();
+  factsBox.appendChild(el("div", { class: "field" }, [
+    el("label", { text: "Présence d'un mineur de moins de 6 ans au foyer" }),
+    el("p", { text: mineur === true ? "Oui" : mineur === false ? "Non" : "Non renseigné ou incomplet — voir « Occupants du logement » en section Identification" })
+  ]));
+  plombBody.appendChild(factsBox);
+
+  const crepStatusP = el("p", { class: "legend-note" });
+  function refreshCrepStatus() {
+    const status = crepSignalementStatus();
+    crepStatusP.textContent = status.texte;
+  }
+
+  plombBody.appendChild(buildSegField("Dégradation de peinture constatée lors de la présente visite (volets, fenêtres, portes, plinthes anciennes)",
+    [
+      { v: "Oui — dégradation constatée", l: "Oui — dégradation constatée", onSelect: refreshCrepStatus },
+      { v: "Non — bon état ou absence", l: "Non — bon état ou absence", onSelect: refreshCrepStatus },
+      { v: "Non vérifié", l: "Non vérifié", onSelect: refreshCrepStatus }
+    ],
+    () => STATE.plomb.peinture_degradee_constatee, v => STATE.plomb.peinture_degradee_constatee = v));
+
+  plombBody.appendChild(buildTextField("Observations (localisation précise, ampleur, éléments concernés)", () => STATE.plomb.observations, v => STATE.plomb.observations = v,
+    { textarea: true, rows: 2, placeholder: "Ex. : peinture écaillée sur volets battants façade nord, accessible, sur environ 0,5 m²…" }));
+
+  refreshCrepStatus();
+  plombBody.appendChild(crepStatusP);
+  plombBody.appendChild(el("p", { class: "subtitle", text: "Joindre impérativement des photographies en cas de dégradation constatée, quelle que soit la conclusion du test ci-dessus." }));
+  plombBody.appendChild(el("label", { text: "Photographies" }));
+  plombBody.appendChild(buildPhotoRow(STATE.plomb.photos, () => renderApp()));
+
+  plombCard.appendChild(plombBody);
+  card.appendChild(plombCard);
+
+  /* ---------- Indices d'insalubrité (liste existante) ---------- */
+  CRITERES_INSALUBRITE.forEach(crit => {
+    if (!STATE.insalubrite[crit.key]) STATE.insalubrite[crit.key] = { coche: false, obs: "" };
+    const data = STATE.insalubrite[crit.key];
+
+    const box = el("div", { class: "elem-card" });
+    const head = el("div", { class: "elem-head open" });
+    head.appendChild(buildCheckline(crit.label, () => data.coche, v => { data.coche = v; refreshInsalubriteIcon(head, data); }));
+    box.appendChild(head);
+
+    const body = el("div", { class: "elem-body open" });
+    body.appendChild(buildTextField("Observations / localisation", () => data.obs, v => data.obs = v, { textarea: true, rows: 2, placeholder: "Pièce concernée, ampleur, éléments visibles…" }));
+    box.appendChild(body);
+    card.appendChild(box);
+  });
+
+  /* ---------- Précarité énergétique (repérage) ---------- */
+  card.appendChild(el("h3", { text: "Précarité énergétique (repérage)" }));
+  card.appendChild(el("p", { class: "subtitle",
+    text: "Axe distinct des critères de décence et d'insalubrité au sens strict, mais régulièrement documenté dans les grilles de visite de référence (CAF)." }));
+  CRITERES_PRECARITE.forEach(crit => {
+    if (!STATE.precarite[crit.key]) STATE.precarite[crit.key] = { coche: false, obs: "" };
+    const data = STATE.precarite[crit.key];
+
+    const box = el("div", { class: "elem-card" });
+    const head = el("div", { class: "elem-head open" });
+    head.appendChild(buildCheckline(crit.label, () => data.coche, v => { data.coche = v; refreshInsalubriteIcon(head, data); }));
+    box.appendChild(head);
+
+    const body = el("div", { class: "elem-body open" });
+    body.appendChild(buildTextField("Observations", () => data.obs, v => data.obs = v, { textarea: true, rows: 2 }));
+    box.appendChild(body);
+    card.appendChild(box);
+  });
+
+  return card;
+}
+
+function refreshInsalubriteIcon(headNode, data) {
+  // simple retour visuel local sans re-render complet
+  headNode.style.background = data.coche ? "#fdf4f3" : "#fff";
+}
+
+/* ============================================================================
+   SECTION — INVENTAIRE DES PIÈCES
+   Cœur de l'état des lieux : chaque pièce ajoutée est instanciée depuis un
+   gabarit ROOM_TEMPLATES ; chaque élément du gabarit devient une fiche
+   dépliable avec le détail complet (Nature / Consistance / Destination /
+   État d'usure / Ménage / Couleur / Fonctionnement / Ampleur / Observations
+   / Photos / Absent-Sans objet).
+   ============================================================================ */
+
+function emptyElementData() {
+  return {
+    absent: false,
+    nature: "",
+    consistance: "",
+    destination: "",
+    etat_usure: "",
+    menage: "",
+    couleur: "",
+    fonctionnement: "",
+    ampleur: "",
+    observations: "",
+    photos: []
+  };
+}
+
+function createRoom(templateKey) {
+  const tpl = ROOM_TEMPLATES[templateKey];
+  const room = {
+    id: uid(),
+    templateKey: templateKey,
+    customLabel: "",
+    elements: {}
+  };
+  tpl.elements.forEach(e => { room.elements[e.key] = emptyElementData(); });
+  return room;
+}
+
+function roomDisplayName(room) {
+  const tpl = ROOM_TEMPLATES[room.templateKey];
+  return room.customLabel ? (tpl.label + " — " + room.customLabel) : tpl.label;
+}
+
+function roomCompletionStats(room) {
+  const tpl = ROOM_TEMPLATES[room.templateKey];
+  let filled = 0, flagged = 0;
+  tpl.elements.forEach(e => {
+    const d = room.elements[e.key];
+    if (!d) return;
+    if (d.absent) { filled++; return; }
+    if (d.etat_usure || d.observations || d.nature) filled++;
+    if (d.etat_usure === "Dégradé" || d.etat_usure === "Hors d'usage" || (d.fonctionnement && d.fonctionnement.indexOf("Non fonctionnel") === 0)) flagged++;
+  });
+  return { total: tpl.elements.length, filled: filled, flagged: flagged };
+}
+
+function renderPieces() {
+  const wrap = el("div", {});
+
+  const card = el("div", { class: "card" });
+  card.appendChild(el("h2", { text: "Inventaire des pièces" }));
+  card.appendChild(el("p", { class: "subtitle",
+    text: "Ajoutez chaque pièce visitée. Chaque élément constitutif (sol, murs, plafond, menuiseries, équipements…) est à documenter : nature, état d'usure, fonctionnement, ampleur du désordre éventuel et photographies. Cocher « Absent / sans objet » pour les éléments non présents dans le logement." }));
+  wrap.appendChild(card);
+
+  // Sélecteur d'ajout de pièce
+  const addBox = el("div", { class: "card" });
+  addBox.appendChild(el("h3", { text: "Ajouter une pièce", style: "margin-top:0;" }));
+  const segAdd = el("div", { class: "seg" });
+  Object.keys(ROOM_TEMPLATES).forEach(key => {
+    const tpl = ROOM_TEMPLATES[key];
+    const btn = el("button", { type: "button", class: "seg-btn", text: tpl.icon + " " + tpl.label });
+    btn.addEventListener("click", () => {
+      const room = createRoom(key);
+      STATE.rooms.push(room);
+      saveState();
+      renderApp();
+      window.scrollTo({ top: 0, behavior: "smooth" });
+      showToast("Pièce ajoutée : " + tpl.label);
+    });
+    segAdd.appendChild(btn);
+  });
+  addBox.appendChild(segAdd);
+  wrap.appendChild(addBox);
+
+  if (STATE.rooms.length === 0) {
+    const empty = el("div", { class: "card empty-state" });
+    empty.appendChild(el("div", { class: "plus-big", text: "+" }));
+    empty.appendChild(el("p", { text: "Aucune pièce ajoutée pour le moment. Sélectionnez un type de pièce ci-dessus pour commencer la visite." }));
+    wrap.appendChild(empty);
+    return wrap;
+  }
+
+  STATE.rooms.forEach((room, roomIdx) => {
+    wrap.appendChild(renderRoomCard(room, roomIdx));
+  });
+
+  return wrap;
+}
+
+function renderRoomCard(room, roomIdx) {
+  const tpl = ROOM_TEMPLATES[room.templateKey];
+  const card = el("div", { class: "card" });
+
+  const top = el("div", { class: "room-card-top" });
+  const titleBox = el("div", {});
+  titleBox.appendChild(el("h2", { text: tpl.icon + "  " + tpl.label, style: "margin-bottom:2px;" }));
+  const stats = roomCompletionStats(room);
+  titleBox.appendChild(el("p", { class: "subtitle", text: stats.filled + " / " + stats.total + " éléments renseignés" + (stats.flagged ? " · " + stats.flagged + " signalé(s) en désordre" : "") }));
+  top.appendChild(titleBox);
+  const delBtn = el("button", { type: "button", class: "btn btn-danger btn-sm", text: "Supprimer" });
+  delBtn.addEventListener("click", () => {
+    openConfirmModal(
+      "Supprimer cette pièce ?",
+      "Cette action supprimera définitivement « " + roomDisplayName(room) + " » ainsi que toutes les saisies et photos associées.",
+      () => {
+        STATE.rooms.splice(roomIdx, 1);
+        saveState();
+        renderApp();
+      }
+    );
+  });
+  top.appendChild(delBtn);
+  card.appendChild(top);
+
+  card.appendChild(buildTextField("Identifiant de la pièce (si plusieurs pièces du même type)", () => room.customLabel, v => room.customLabel = v,
+    { placeholder: "Ex. « chambre 1 », « cave principale »…" }));
+
+  tpl.elements.forEach(elemDef => {
+    card.appendChild(renderElementFicheCard(room, elemDef));
+  });
+
+  return card;
+}
+
+function renderElementFicheCard(room, elemDef) {
+  const data = room.elements[elemDef.key];
+  const boxKey = room.id + "::" + elemDef.key;
+  const isOpen = UI.openElemKeys.has(boxKey);
+
+  const box = el("div", { class: "elem-card" });
+
+  // L'en-tête contient désormais DEUX zones cliquables distinctes, chacune
+  // un <button> natif : le bouton de bascule (dépliage de la fiche) et le
+  // bouton appareil photo rapide. Le conteneur englobant devient donc un
+  // simple <div> de mise en page SANS gestionnaire de clic propre — seuls
+  // les deux <button> qu'il contient sont réellement interactifs. On ne
+  // peut pas imbriquer un <button> dans un autre <button> (HTML invalide,
+  // comportement de rendu imprévisible), d'où cette restructuration en
+  // boutons frères plutôt qu'un bouton unique englobant tout l'en-tête.
+  // Le principe "boutons natifs uniquement" (jamais de <div> cliquable,
+  // pour fiabilité tactile sur iPad Safari) reste strictement respecté :
+  // c'est seulement le découpage en deux zones qui change.
+  const head = el("div", { class: "elem-head" + (isOpen ? " open" : "") });
+
+  const toggleBtn = el("button", { type: "button", class: "elem-head-toggle" });
+  const left = el("div", { class: "elem-head-left" });
+  const iconCls = data.absent ? "elem-icon" : (filledLevelIcon(data));
+  left.appendChild(el("span", { class: iconCls }));
+  left.appendChild(el("span", { class: "elem-name", text: elemDef.label }));
+  if (elemDef.majeur) left.appendChild(el("span", { class: "elem-badge", text: "élément majeur" }));
+  toggleBtn.appendChild(left);
+
+  const rightHead = el("div", { style: "display:flex;align-items:center;gap:8px;" });
+  if (data.absent) rightHead.appendChild(el("span", { class: "elem-badge", text: "absent / SO" }));
+  rightHead.appendChild(el("span", { class: "elem-chevron" + (isOpen ? " open" : ""), text: "▾" }));
+  toggleBtn.appendChild(rightHead);
+
+  toggleBtn.addEventListener("click", () => {
+    if (UI.openElemKeys.has(boxKey)) UI.openElemKeys.delete(boxKey);
+    else UI.openElemKeys.add(boxKey);
+    renderApp();
+  });
+  head.appendChild(toggleBtn);
+
+  if (!data.absent) {
+    const quickCam = buildQuickCameraButton(data);
+    head.appendChild(quickCam.button);
+    head.appendChild(quickCam.fileInput);
+  }
+
+  box.appendChild(head);
+
+  const body = el("div", { class: "elem-body" + (isOpen ? " open" : "") });
+  if (isOpen) {
+    body.appendChild(renderElementFicheBody(data, elemDef));
+  }
+  box.appendChild(body);
+
+  return box;
+}
+
+/* Bouton appareil photo compact, visible directement sur l'en-tête (replié
+   ou déplié) de chaque point examiné, sans nécessiter l'ouverture de la
+   fiche complète. Un appui ouvre directement l'appareil photo de l'appareil
+   (cf. createPhotoCaptureInput) ; un badge affiche le nombre de photos déjà
+   attachées à cet élément.
+
+   IMPORTANT — retourne le bouton ET le champ de saisie SÉPARÉMENT plutôt que
+   d'imbriquer le second dans le premier : un <button> ne peut valablement
+   contenir aucun contenu interactif (un <input> en est un au sens du modèle
+   de contenu HTML). Chromium tolère cette imbrication sans rien signaler,
+   mais WebKit/Safari peut s'avérer plus strict et ne pas déclencher
+   l'événement de façon fiable au toucher — exactement la même famille de
+   problème que les <div> cliquables ayant posé difficulté par le passé sur
+   iPad. L'appelant insère donc les deux comme FRÈRES dans un même
+   conteneur, jamais l'un dans l'autre, sur le modèle déjà éprouvé de
+   buildPhotoRow (bouton "+ Photo" et champ de saisie également frères). */
+function buildQuickCameraButton(data) {
+  const btn = el("button", { type: "button", class: "elem-camera-btn", title: "Ajouter une photo à cet élément" });
+  btn.appendChild(el("span", { class: "camera-icon", text: "📷" }));
+  if (data.photos && data.photos.length > 0) {
+    btn.appendChild(el("span", { class: "camera-badge", text: String(data.photos.length) }));
+  }
+
+  const fileInput = createPhotoCaptureInput(dataUrl => {
+    data.photos.push({ data: dataUrl, ts: new Date().toISOString() });
+    saveState();
+    renderApp();
+  });
+
+  btn.addEventListener("click", evt => {
+    evt.stopPropagation();
+    fileInput.click();
+  });
+
+  return { button: btn, fileInput: fileInput };
+}
+
+function filledLevelIcon(data) {
+  if (data.etat_usure === "Dégradé" || data.etat_usure === "Hors d'usage") return "elem-icon flag";
+  if (data.nature || data.observations || data.etat_usure) return "elem-icon filled";
+  return "elem-icon";
+}
+
+function renderElementFicheBody(data, elemDef) {
+  const wrap = el("div", {});
+
+  const absentRow = el("div", { class: "absent-row" });
+  absentRow.appendChild(buildCheckline("Élément absent / sans objet dans cette pièce", () => data.absent, v => {
+    data.absent = v;
+    renderApp();
+  }));
+  wrap.appendChild(absentRow);
+
+  if (data.absent) {
+    wrap.appendChild(buildTextField("Précision (facultatif)", () => data.observations, v => data.observations = v,
+      { textarea: true, rows: 2, placeholder: "Ex. : absence constatée, non concerné par la configuration du logement…" }));
+    return wrap;
+  }
+
+  const g1 = el("div", { class: "grid2" });
+  g1.appendChild(buildTextField("Nature", () => data.nature, v => data.nature = v,
+    { placeholder: elemDef.natureHint || "Type, matériau constaté…" }));
+  g1.appendChild(buildTextField("Consistance", () => data.consistance, v => data.consistance = v,
+    { placeholder: "Composition, dimensions, accessoires…" }));
+  wrap.appendChild(g1);
+
+  wrap.appendChild(buildTextField("Destination", () => data.destination, v => data.destination = v,
+    { placeholder: "Usage normal de l'élément dans la pièce" }));
+
+  wrap.appendChild(buildSegField("État d'usure", ETAT_USURE, () => data.etat_usure, v => { data.etat_usure = v; }, toneForEtatUsure));
+  wrap.appendChild(buildSegField("Ménage / propreté", MENAGE, () => data.menage, v => data.menage = v, toneForMenage));
+
+  if (elemDef.hasFonctionnement) {
+    wrap.appendChild(buildSegField("Fonctionnement constaté", FONCTIONNEMENT, () => data.fonctionnement, v => data.fonctionnement = v, toneForFonctionnement));
+  }
+
+  if (elemDef.hasCouleur) {
+    wrap.appendChild(buildTextField("Couleur (si utile)", () => data.couleur, v => data.couleur = v, { placeholder: "Couleur principale constatée" }));
+  }
+
+  wrap.appendChild(buildSegField("Ampleur du désordre constaté", AMPLEUR, () => data.ampleur, v => data.ampleur = v, toneForAmpleur));
+
+  wrap.appendChild(buildTextField("Observations détaillées", () => data.observations, v => data.observations = v,
+    { textarea: true, rows: 3, placeholder: "Description factuelle du désordre, localisation précise, dimensions approximatives…" }));
+
+  const photoLabel = el("label", { text: "Photographies" });
+  wrap.appendChild(photoLabel);
+  if (elemDef.majeur && data.photos.length === 0) {
+    wrap.appendChild(el("p", { class: "photo-hint",
+      text: "📷 Photo recommandée pour cet élément (sécurité ou conformité sensible) — y compris en l'absence de désordre, à titre de preuve d'état, conforme ou non." }));
+  }
+  wrap.appendChild(buildPhotoRow(data.photos, () => renderApp()));
+
+  return wrap;
+}
+
+function toneForEtatUsure(v) {
+  if (v === "Bon état") return "ok";
+  if (v === "État d'usage") return "warn";
+  if (v === "Dégradé" || v === "Hors d'usage") return "bad";
+  return null;
+}
+function toneForMenage(v) {
+  if (v === "Propre") return "ok";
+  if (v === "Moyen") return "warn";
+  return "bad";
+}
+function toneForFonctionnement(v) {
+  if (v === "Fonctionnel") return "ok";
+  if (v === "Fonctionnement dégradé") return "warn";
+  if (v === "Non fonctionnel") return "bad";
+  return null;
+}
+function toneForAmpleur(v) {
+  if (v === "0") return "ok";
+  if (v === "25") return "warn";
+  if (v === "50" || v === "100") return "bad";
+  return null;
+}
+
+/* ============================================================================
+   SECTION — RÉSERVES & DÉSORDRES
+   Permet de consigner des constats transversaux (non rattachés à un seul
+   élément de pièce) selon le format retenu par le cabinet :
+   Constat → Qualification réglementaire → Impacts → Caractère remédiable
+   → Recommandations techniques.
+   ============================================================================ */
+
+function emptyReserve() {
+  return {
+    id: uid(),
+    titre: "",
+    localisation: "",
+    constat: "",
+    qualification: "",
+    impacts: "",
+    remediable: "",      // "Oui" / "Non" / "À déterminer"
+    recommandations: "",
+    gravite: "",          // reprise de GRAVITE_CRITERE pour cohérence visuelle
+    photos: []
+  };
+}
+
+function renderReserves() {
+  const wrap = el("div", {});
+
+  const intro = el("div", { class: "card" });
+  intro.appendChild(el("h2", { text: "Réserves et désordres transversaux" }));
+  intro.appendChild(el("p", { class: "subtitle",
+    text: "Consignez ici les désordres qui dépassent un seul élément ponctuel (ex. humidité généralisée, non-décence d'ensemble) selon le schéma : Constat → Qualification réglementaire → Impacts → Caractère remédiable → Recommandations techniques." }));
+  const addBtn = el("button", { type: "button", class: "btn btn-gold", text: "+ Ajouter une réserve / un désordre" });
+  addBtn.addEventListener("click", () => {
+    STATE.reserves.push(emptyReserve());
+    saveState();
+    renderApp();
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  });
+  intro.appendChild(addBtn);
+  wrap.appendChild(intro);
+
+  if (STATE.reserves.length === 0) {
+    const empty = el("div", { class: "card empty-state" });
+    empty.appendChild(el("p", { text: "Aucune réserve transversale enregistrée. Les désordres déjà décrits au niveau de chaque élément de pièce n'ont pas besoin d'être dupliqués ici." }));
+    wrap.appendChild(empty);
+    return wrap;
+  }
+
+  STATE.reserves.forEach((res, idx) => {
+    wrap.appendChild(renderReserveCard(res, idx));
+  });
+
+  return wrap;
+}
+
+function renderReserveCard(res, idx) {
+  const card = el("div", { class: "card" });
+  const top = el("div", { class: "room-card-top" });
+  top.appendChild(el("h2", { text: "Réserve n°" + (idx + 1) + (res.titre ? " — " + res.titre : "") }));
+  const delBtn = el("button", { type: "button", class: "btn btn-danger btn-sm", text: "Supprimer" });
+  delBtn.addEventListener("click", () => {
+    openConfirmModal("Supprimer cette réserve ?", "Cette suppression est définitive.", () => {
+      STATE.reserves.splice(idx, 1);
+      saveState();
+      renderApp();
+    });
+  });
+  top.appendChild(delBtn);
+  card.appendChild(top);
+
+  card.appendChild(buildTextField("Intitulé du désordre", () => res.titre, v => res.titre = v, { placeholder: "Ex. : Humidité ascensionnelle généralisée" }));
+  card.appendChild(buildTextField("Localisation", () => res.localisation, v => res.localisation = v, { placeholder: "Pièce(s) concernée(s), façade, niveau…" }));
+
+  card.appendChild(el("h3", { text: "1. Constat" }));
+  card.appendChild(buildTextField("Description factuelle des désordres observés", () => res.constat, v => res.constat = v,
+    { textarea: true, rows: 3, placeholder: "Lors de la visite, il est constaté que…" }));
+
+  card.appendChild(el("h3", { text: "2. Qualification réglementaire" }));
+  card.appendChild(buildTextField("Textes et critères mobilisables", () => res.qualification, v => res.qualification = v,
+    { textarea: true, rows: 3, placeholder: "Ex. : décret n°2002-120 du 30 janvier 2002 ; articles L.1331-22 et suivants du CSP…" }));
+
+  card.appendChild(el("h3", { text: "3. Impacts" }));
+  card.appendChild(buildTextField("Impacts sur la santé, la sécurité ou l'usage normal du logement", () => res.impacts, v => res.impacts = v,
+    { textarea: true, rows: 3 }));
+
+  card.appendChild(el("h3", { text: "4. Caractère remédiable" }));
+  card.appendChild(buildSegField("Appréciation technique", ["Remédiable", "Non remédiable", "À déterminer après investigation complémentaire"], () => res.remediable, v => res.remediable = v));
+
+  card.appendChild(el("h3", { text: "5. Recommandations techniques" }));
+  card.appendChild(buildTextField("Recommandations (sans portée décisionnelle)", () => res.recommandations, v => res.recommandations = v,
+    { textarea: true, rows: 3, placeholder: "Il est recommandé de… La décision finale appartient aux autorités compétentes." }));
+
+  card.appendChild(buildSegField("Niveau de gravité indicatif", GRAVITE_CRITERE, () => res.gravite, v => res.gravite = v, toneForGravite));
+
+  card.appendChild(el("label", { text: "Photographies" }));
+  card.appendChild(buildPhotoRow(res.photos, () => renderApp()));
+
+  return card;
+}
+
+/* ============================================================================
+   SECTION — SIGNATURES & CLÔTURE
+   ============================================================================ */
+
+function renderSignatures() {
+  const wrap = el("div", {});
+
+  const card = el("div", { class: "card" });
+  card.appendChild(el("h2", { text: "Signatures et clôture du constat" }));
+  card.appendChild(el("p", { class: "subtitle",
+    text: "Les présentes constatations sont strictement neutres et impartiales : elles décrivent et qualifient techniquement les faits observés, sans préjuger des décisions des autorités compétentes (mairie, ARS, préfecture, tribunal). La signature des parties présentes vaut prise de connaissance contradictoire du constat, non approbation d'une qualification juridique." }));
+  wrap.appendChild(card);
+
+  ["expert", "bailleur", "locataire"].forEach(role => {
+    wrap.appendChild(renderSignaturePad(role));
+  });
+
+  const exportCard = el("div", { class: "card" });
+  exportCard.appendChild(el("h3", { text: "Finalisation", style: "margin-top:0;" }));
+  exportCard.appendChild(el("p", { class: "subtitle", text: "Une fois les signatures recueillies, utilisez le bouton « Exporter » en haut de l'écran pour générer le document Word (.docx) ou l'impression PDF du rapport complet." }));
+  wrap.appendChild(exportCard);
+
+  return wrap;
+}
+
+const SIGNATURE_ROLE_LABEL = {
+  expert: "Expert / technicien rédacteur",
+  bailleur: "Bailleur / propriétaire (ou représentant)",
+  locataire: "Locataire / occupant"
+};
+
+function renderSignaturePad(role) {
+  const card = el("div", { class: "card" });
+  card.appendChild(el("h3", { text: SIGNATURE_ROLE_LABEL[role], style: "margin-top:0;" }));
+
+  const existing = STATE.signatures[role];
+  if (existing) {
+    card.appendChild(el("img", { src: existing, alt: "Signature " + role, style: "max-width:280px;border:1px solid var(--line);border-radius:8px;background:#fff;" }));
+    const clearBtn = el("button", { type: "button", class: "btn btn-line btn-sm", text: "Effacer et signer à nouveau", style: "margin-top:8px;" });
+    clearBtn.addEventListener("click", () => {
+      STATE.signatures[role] = null;
+      saveState();
+      renderApp();
+    });
+    card.appendChild(clearBtn);
+    return card;
+  }
+
+  const canvas = el("canvas", { class: "sigbox" });
+  card.appendChild(canvas);
+
+  const actions = el("div", { class: "sig-actions" });
+  const clearBtn = el("button", { type: "button", class: "btn btn-line btn-sm", text: "Effacer" });
+  const saveBtn = el("button", { type: "button", class: "btn btn-gold btn-sm", text: "Valider la signature" });
+  actions.appendChild(clearBtn);
+  actions.appendChild(saveBtn);
+  card.appendChild(actions);
+
+  setupSignatureCanvas(canvas, clearBtn, saveBtn, dataUrl => {
+    STATE.signatures[role] = dataUrl;
+    saveState();
+    renderApp();
+  });
+
+  return card;
+}
+
+function setupSignatureCanvas(canvas, clearBtn, saveBtn, onSave) {
+  // Dimensionnement réel du canevas en fonction de sa taille CSS (évite le flou).
+  // IMPORTANT : au moment où cette fonction est appelée (juste après la
+  // construction du nœud <canvas>), celui-ci n'est encore attaché qu'à un
+  // fragment de DOM détaché (card), pas au document réel — getBoundingClientRect()
+  // y renverrait {width:0, height:0} et le canvas serait dimensionné à 0x0,
+  // rendant tout dessin invisible et l'export toDataURL() vide. On reporte
+  // donc le dimensionnement via requestAnimationFrame, après que l'appelant
+  // ait eu l'occasion d'attacher la carte au document et que le layout ait
+  // été calculé.
+  let sized = false;
+  function fitCanvas() {
+    const rect = canvas.getBoundingClientRect();
+    if (rect.width === 0 || rect.height === 0) {
+      // Le nœud n'est toujours pas visible/layouté : on réessaie au prochain frame
+      // plutôt que de figer un canevas à 0x0.
+      requestAnimationFrame(fitCanvas);
+      return;
+    }
+    const ratio = window.devicePixelRatio || 1;
+    canvas.width = rect.width * ratio;
+    canvas.height = rect.height * ratio;
+    const ctx = canvas.getContext("2d");
+    ctx.scale(ratio, ratio);
+    ctx.lineWidth = 2;
+    ctx.lineCap = "round";
+    ctx.strokeStyle = "#13294b";
+    sized = true;
+  }
+  requestAnimationFrame(fitCanvas);
+
+  let drawing = false;
+  let last = { x: 0, y: 0 };
+
+  function getPos(evt) {
+    const rect = canvas.getBoundingClientRect();
+    const point = evt.touches ? evt.touches[0] : evt;
+    return { x: point.clientX - rect.left, y: point.clientY - rect.top };
+  }
+
+  function start(evt) {
+    if (!sized) return; // canvas pas encore dimensionné (cas limite très rare)
+    evt.preventDefault();
+    drawing = true;
+    last = getPos(evt);
+  }
+  function move(evt) {
+    if (!drawing) return;
+    evt.preventDefault();
+    const pos = getPos(evt);
+    const ctx = canvas.getContext("2d");
+    ctx.beginPath();
+    ctx.moveTo(last.x, last.y);
+    ctx.lineTo(pos.x, pos.y);
+    ctx.stroke();
+    last = pos;
+  }
+  function end(evt) { drawing = false; }
+
+  canvas.addEventListener("mousedown", start);
+  canvas.addEventListener("mousemove", move);
+  canvas.addEventListener("mouseup", end);
+  canvas.addEventListener("mouseleave", end);
+  canvas.addEventListener("touchstart", start, { passive: false });
+  canvas.addEventListener("touchmove", move, { passive: false });
+  canvas.addEventListener("touchend", end);
+
+  clearBtn.addEventListener("click", () => {
+    const ctx = canvas.getContext("2d");
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+  });
+
+  saveBtn.addEventListener("click", () => {
+    onSave(canvas.toDataURL("image/png"));
+  });
+}
+
+/* ============================================================================
+   MODAL GÉNÉRIQUE (confirmation, menu d'export)
+   ============================================================================ */
+
+function openModal(buildFn) {
+  const overlay = document.getElementById("modalOverlay");
+  const box = document.getElementById("modalBox");
+  clearNode(box);
+  buildFn(box, closeModal);
+  overlay.classList.add("show");
+}
+
+function closeModal() {
+  document.getElementById("modalOverlay").classList.remove("show");
+}
+
+function openConfirmModal(title, message, onConfirm) {
+  openModal((box, close) => {
+    box.appendChild(el("h3", { text: title }));
+    box.appendChild(el("p", { text: message }));
+    const actions = el("div", { class: "modal-actions" });
+    const cancelBtn = el("button", { type: "button", class: "btn btn-line", text: "Annuler" });
+    cancelBtn.addEventListener("click", close);
+    const okBtn = el("button", { type: "button", class: "btn btn-danger", text: "Confirmer la suppression" });
+    okBtn.addEventListener("click", () => { onConfirm(); close(); });
+    actions.appendChild(cancelBtn);
+    actions.appendChild(okBtn);
+    box.appendChild(actions);
+  });
+}
+
+document.getElementById("modalOverlay").addEventListener("click", (evt) => {
+  if (evt.target.id === "modalOverlay") closeModal();
+});
+
+function openExportModal() {
+  openModal((box, close) => {
+    box.appendChild(el("h3", { text: "Exporter le rapport" }));
+    box.appendChild(el("p", { text: "Choisissez le format d'export du constat technique." }));
+    const actions = el("div", { class: "modal-actions", style: "flex-direction:column;align-items:stretch;" });
+
+    const btnPrint = el("button", { type: "button", class: "btn btn-gold", text: "🖨️ Aperçu impression / PDF" });
+    btnPrint.addEventListener("click", () => { close(); exportPrintView(); });
+
+    const btnDocx = el("button", { type: "button", class: "btn btn-line", text: "📄 Générer le document Word (.docx)" });
+    btnDocx.addEventListener("click", () => { close(); exportDocx(); });
+
+    const btnJson = el("button", { type: "button", class: "btn btn-line", text: "💾 Sauvegarder la saisie (.json)" });
+    btnJson.addEventListener("click", () => { close(); exportJson(); });
+
+    const btnImportLbl = el("button", { type: "button", class: "btn btn-line", text: "📂 Reprendre une saisie (.json)" });
+    btnImportLbl.addEventListener("click", () => { close(); document.getElementById("hiddenFileImport").click(); });
+
+    actions.appendChild(btnPrint);
+    actions.appendChild(btnDocx);
+    actions.appendChild(btnJson);
+    actions.appendChild(btnImportLbl);
+
+    const cancelRow = el("div", { class: "modal-actions", style: "margin-top:6px;" });
+    const cancelBtn = el("button", { type: "button", class: "btn btn-line", text: "Fermer" });
+    cancelBtn.addEventListener("click", close);
+    cancelRow.appendChild(cancelBtn);
+
+    box.appendChild(actions);
+    box.appendChild(cancelRow);
+  });
+}
+
+/* ============================================================================
+   MOTEUR DE GÉNÉRATION DU RAPPORT
+   Construit une représentation structurée unique du rapport (liste de
+   "blocs"), consommée ensuite par les deux exports (impression/PDF et
+   Word .docx) afin d'éviter toute divergence de contenu entre formats.
+   Types de blocs : heading1, heading2, heading3, paragraph, keyvalue,
+   table, photoGrid, signatureBlock, pagebreak.
+   ============================================================================ */
+
+function buildReportBlocks() {
+  const blocks = [];
+  const m = STATE.meta;
+
+  blocks.push({ type: "title", text: "ÉTAT DES LIEUX TECHNIQUE CONTRADICTOIRE" });
+  blocks.push({ type: "subtitle", text: (m.cabinet_nom || "CEL-47") + " — " + (m.cabinet_adresse || "Laplume (47310)") });
+  blocks.push({ type: "subtitle", text: "Document établi selon le décret n°2002-120 du 30 janvier 2002, la loi n°89-462 du 6 juillet 1989 et les articles L.1331-22 et suivants du Code de la santé publique." });
+
+  blocks.push({ type: "heading1", text: "1. Identification de la mission" });
+  blocks.push({ type: "keyvalue", rows: [
+    ["Référence / lettre de mission", m.reference_mission],
+    ["Type d'intervention", m.type_intervention],
+    ["Date de la visite", formatDateFR(m.date_visite)],
+    ["Heure de la visite", m.heure_visite],
+    ["Expert / technicien rédacteur", m.expert_nom],
+    ["Cabinet", m.cabinet_nom],
+    ["SIRET", m.expert_siret]
+  ]});
+
+  blocks.push({ type: "heading1", text: "2. Localisation et caractéristiques du logement" });
+  blocks.push({ type: "keyvalue", rows: [
+    ["Adresse", [m.adresse, m.complement_adresse].filter(Boolean).join(" — ")],
+    ["Code postal / Ville", [m.code_postal, m.ville].filter(Boolean).join(" ")],
+    ["Type de bien", m.type_bien],
+    ["Année de construction", m.annee_construction],
+    ["Étage", m.etage],
+    ["Surface habitable déclarée", m.surface_habitable ? m.surface_habitable + " m²" : ""],
+    ["Nombre de pièces principales", m.nb_pieces_principales],
+    ["Classe DPE", m.dpe_classe],
+    ["Consommation DPE", m.dpe_valeur ? m.dpe_valeur + " kWhep/m².an" : ""]
+  ]});
+
+  blocks.push({ type: "heading2", text: "Qualification préalable du logement" });
+  blocks.push({ type: "keyvalue", rows: [
+    ["Locaux par nature potentiellement impropres à l'habitation", m.qualif_locaux_impropres || "Non renseigné"],
+    ["Précision", m.locaux_impropres_observations || ""]
+  ]});
+
+  blocks.push({ type: "heading2", text: "Diagnostics annexés au dossier (si disponibles)" });
+  blocks.push({ type: "keyvalue", rows: [
+    ["Diagnostic électricité — date", formatDateFR(m.diag_elec_date) || "Non communiqué"],
+    ["Diagnostic électricité — conclusions", m.diag_elec_conclusions || ""],
+    ["Diagnostic gaz — date", formatDateFR(m.diag_gaz_date) || "Non communiqué"],
+    ["Diagnostic gaz — conclusions", m.diag_gaz_conclusions || ""],
+    ["CREP existant annexé au bail — date", formatDateFR(m.crep_existant_date) || "Non communiqué"],
+    ["CREP existant — résultat", m.crep_existant_resultat || "Non renseigné"],
+    ["Repérage amiante existant — date", formatDateFR(m.amiante_existant_date) || "Non communiqué"],
+    ["Repérage amiante — résultat", m.amiante_existant_resultat || "Non renseigné"],
+    ["État des risques (ERP) — date", formatDateFR(m.erp_date) || "Non communiqué"],
+    ["État des risques (ERP) — risque(s) identifié(s)", m.erp_risques_identifies || "Non renseigné"]
+  ]});
+
+  blocks.push({ type: "heading1", text: "3. Conditions de la visite" });
+  blocks.push({ type: "keyvalue", rows: [
+    ["Conditions météo", m.meteo],
+    ["Température extérieure", m.temperature_ext ? m.temperature_ext + " °C" : ""],
+    ["Hygrométrie intérieure mesurée", m.hygrometrie ? m.hygrometrie + " %" : ""],
+    ["Température intérieure mesurée", m.thermometrie ? m.thermometrie + " °C" : ""]
+  ]});
+  const presents = [];
+  if (m.presence_parties.bailleur) presents.push("Bailleur / propriétaire");
+  if (m.presence_parties.locataire) presents.push("Locataire / occupant");
+  if (m.presence_parties.mandataire) presents.push("Mandataire");
+  if (m.presence_parties.tiers) presents.push("Tiers" + (m.presence_tiers_precision ? " (" + m.presence_tiers_precision + ")" : ""));
+  blocks.push({ type: "keyvalue", rows: [["Parties présentes", presents.join(", ") || "Non renseigné"]] });
+
+  blocks.push({ type: "heading1", text: "4. Identité des parties" });
+  blocks.push({ type: "keyvalue", rows: [
+    ["Bailleur", [m.bailleur_nom, m.bailleur_adresse, m.bailleur_contact].filter(Boolean).join(" — ")],
+    ["Occupant", [m.occupant_nom, m.occupant_contact].filter(Boolean).join(" — ")],
+    ["Mandataire", m.mandataire_nom]
+  ]});
+
+  if (m.observations_generales) {
+    blocks.push({ type: "heading2", text: "Observations générales préliminaires" });
+    blocks.push({ type: "paragraph", text: m.observations_generales });
+  }
+
+  // --- Occupants et qualification de sur-occupation (repère CAF) ---
+  blocks.push({ type: "heading1", text: "5. Occupants du logement" });
+  if (m.occupants && m.occupants.length > 0) {
+    const occRows = m.occupants.map((o, i) => {
+      const age = ageFromDateNaissance(o.date_naissance);
+      return [o.nom || ("Occupant " + (i + 1)), formatDateFR(o.date_naissance) + (age !== null ? " (" + age + " an" + (age > 1 ? "s" : "") + ")" : "")];
+    });
+    blocks.push({ type: "keyvalue", rows: occRows });
+    const requise = surfaceRequiseCAF(m.occupants.length);
+    blocks.push({ type: "keyvalue", rows: [
+      ["Repère de surface (grille CAF)", requise + " m² pour " + m.occupants.length + " occupant(s)"],
+      ["Surface habitable déclarée", m.surface_habitable ? m.surface_habitable + " m²" : "Non renseignée"]
+    ]});
+    blocks.push({ type: "paragraph", text: "Comparaison purement informative, donnée à titre de repère ; elle n'emporte aucune qualification automatique de sur-occupation.", italic: true });
+  } else {
+    blocks.push({ type: "paragraph", text: "Composition du foyer non renseignée lors de la présente visite.", italic: true });
+  }
+
+  // --- Réseaux généraux ---
+  blocks.push({ type: "heading1", text: "6. Réseaux et équipements généraux" });
+  RESEAUX_GENERAUX.forEach(group => {
+    const data = STATE.reseaux[group.key] || {};
+    const rows = group.questions.map(q => [q.label, data[q.key] || ""]).filter(r => r[1]);
+    if (rows.length === 0) return;
+    blocks.push({ type: "heading2", text: group.label });
+    blocks.push({ type: "keyvalue", rows: rows });
+  });
+
+  // --- Critères de décence : les 8 critères sont systématiquement listés,
+  // y compris ceux non vérifiés ou jugés conformes, afin de documenter
+  // aussi bien les conformités que les désordres. ---
+  blocks.push({ type: "heading1", text: "7. Critères de décence (décret n°2002-120 du 30 janvier 2002)" });
+  CRITERES_DECENCE.forEach(crit => {
+    const data = STATE.decence[crit.key] || {};
+    blocks.push({ type: "heading3", text: crit.label });
+    blocks.push({ type: "paragraph", text: crit.desc, italic: true });
+    blocks.push({ type: "keyvalue", rows: [["État constaté", data.gravite || "Non vérifié"], ["Observations", data.obs || "—"]] });
+  });
+
+  // --- Constat de Risque d'Exposition au Plomb (CREP) — toujours présent ---
+  blocks.push({ type: "heading1", text: "8. Constat de Risque d'Exposition au Plomb (CREP) — visite du jour" });
+  blocks.push({ type: "paragraph", text: "L'obligation de CREP s'applique à tout logement construit avant le 1er janvier 1949 et/ou mis en location après le 12 août 2008 (Code de la santé publique, art. R.1331-24). Le signalement repose sur trois conditions cumulatives : bâti avant 1949, dégradation de peinture constatée, présence d'un mineur de moins de 6 ans.", italic: true });
+  const avant1949Export = batiAvant1949();
+  const mineurExport = presenceMineurMoins6Ans();
+  blocks.push({ type: "keyvalue", rows: [
+    ["Bâti antérieur à 1949 (déclaratif)", avant1949Export === true ? "Oui" : avant1949Export === false ? "Non" : "Non renseigné"],
+    ["Présence d'un mineur de moins de 6 ans au foyer", mineurExport === true ? "Oui" : mineurExport === false ? "Non" : "Non renseigné ou incomplet"],
+    ["Dégradation de peinture constatée lors de la présente visite", STATE.plomb.peinture_degradee_constatee || "Non vérifié"],
+    ["Observations", STATE.plomb.observations || "—"]
+  ]});
+  blocks.push({ type: "paragraph", text: crepSignalementStatus().texte });
+  if (STATE.plomb.photos && STATE.plomb.photos.length) {
+    blocks.push({ type: "photoGrid", photos: STATE.plomb.photos, caption: "Constat de Risque d'Exposition au Plomb (CREP)" });
+  }
+
+  // --- Indices d'insalubrité : les critères sont systématiquement listés
+  // avec leur état explicite (relevé / non relevé), y compris en l'absence
+  // de tout indice, afin de documenter aussi les conformités. ---
+  blocks.push({ type: "heading1", text: "9. Indices d'insalubrité examinés (CSP, art. L.1331-22 et suivants)" });
+  blocks.push({ type: "paragraph", text: "Ce repérage est un outil de constat technique ; il ne constitue ni une qualification d'insalubrité, ni une décision administrative, lesquelles relèvent exclusivement de l'autorité compétente (ARS, mairie, préfecture).", italic: true });
+  const insalubriteRows = CRITERES_INSALUBRITE.map(c => {
+    const data = STATE.insalubrite[c.key] || {};
+    return [c.label, data.coche ? ("Indice relevé" + (data.obs ? " — " + data.obs : "")) : "Non relevé"];
+  });
+  blocks.push({ type: "keyvalue", rows: insalubriteRows });
+
+  // --- Précarité énergétique (repérage), toujours listée intégralement ---
+  blocks.push({ type: "heading1", text: "10. Précarité énergétique (repérage)" });
+  const precariteRows = CRITERES_PRECARITE.map(c => {
+    const data = STATE.precarite[c.key] || {};
+    return [c.label, data.coche ? ("Signalé" + (data.obs ? " — " + data.obs : "")) : "Non signalé"];
+  });
+  blocks.push({ type: "keyvalue", rows: precariteRows });
+
+  // --- Inventaire des pièces ---
+  blocks.push({ type: "heading1", text: "11. Inventaire technique des pièces" });
+  STATE.rooms.forEach((room, idx) => {
+    const tpl = ROOM_TEMPLATES[room.templateKey];
+    blocks.push({ type: "heading2", text: (idx + 1) + ". " + roomDisplayName(room) });
+
+    tpl.elements.forEach(elemDef => {
+      const data = room.elements[elemDef.key];
+      if (!data) return;
+      if (data.absent) {
+        blocks.push({ type: "elementAbsent", label: elemDef.label, note: data.observations });
+        return;
+      }
+      const hasContent = data.nature || data.consistance || data.destination || data.etat_usure ||
+        data.menage || data.fonctionnement || data.observations || (data.photos && data.photos.length);
+      if (!hasContent) return;
+
+      const rows = [];
+      if (data.nature) rows.push(["Nature", data.nature]);
+      if (data.consistance) rows.push(["Consistance", data.consistance]);
+      if (data.destination) rows.push(["Destination", data.destination]);
+      if (data.etat_usure) rows.push(["État d'usure", data.etat_usure]);
+      if (data.menage) rows.push(["Ménage / propreté", data.menage]);
+      if (data.couleur) rows.push(["Couleur", data.couleur]);
+      if (data.fonctionnement) rows.push(["Fonctionnement", data.fonctionnement]);
+      if (data.ampleur) rows.push(["Ampleur du désordre", ampleurLabelFromValue(data.ampleur)]);
+
+      blocks.push({ type: "heading3", text: elemDef.label });
+      blocks.push({ type: "keyvalue", rows: rows });
+      if (data.observations) blocks.push({ type: "paragraph", text: data.observations });
+      if (data.photos && data.photos.length) blocks.push({ type: "photoGrid", photos: data.photos, caption: elemDef.label + " — " + roomDisplayName(room) });
+    });
+  });
+
+  // --- Réserves transversales ---
+  if (STATE.reserves.length > 0) {
+    blocks.push({ type: "heading1", text: "12. Réserves et désordres transversaux" });
+    STATE.reserves.forEach((res, idx) => {
+      blocks.push({ type: "heading2", text: "Réserve n°" + (idx + 1) + (res.titre ? " — " + res.titre : "") });
+      if (res.localisation) blocks.push({ type: "keyvalue", rows: [["Localisation", res.localisation]] });
+      if (res.constat) { blocks.push({ type: "heading3", text: "Constat" }); blocks.push({ type: "paragraph", text: res.constat }); }
+      if (res.qualification) { blocks.push({ type: "heading3", text: "Qualification réglementaire" }); blocks.push({ type: "paragraph", text: res.qualification }); }
+      if (res.impacts) { blocks.push({ type: "heading3", text: "Impacts" }); blocks.push({ type: "paragraph", text: res.impacts }); }
+      if (res.remediable) blocks.push({ type: "keyvalue", rows: [["Caractère remédiable", res.remediable]] });
+      if (res.recommandations) { blocks.push({ type: "heading3", text: "Recommandations techniques" }); blocks.push({ type: "paragraph", text: res.recommandations }); }
+      if (res.photos && res.photos.length) blocks.push({ type: "photoGrid", photos: res.photos, caption: "Réserve n°" + (idx + 1) });
+    });
+  }
+
+  // --- Clause de neutralité ---
+  blocks.push({ type: "heading1", text: "13. Portée du constat" });
+  blocks.push({ type: "paragraph", text: "Le présent document constate et qualifie techniquement les faits observés lors de la visite, à la date indiquée. Il est établi de manière strictement neutre et impartiale, sans préjuger des décisions des autorités compétentes (mairie, ARS, préfecture, tribunal). Il ne constitue ni un avis juridique, ni une décision administrative ou judiciaire. La décision finale appartient en toute hypothèse aux autorités compétentes." });
+
+  // --- Signatures ---
+  blocks.push({ type: "heading1", text: "14. Signatures" });
+  blocks.push({ type: "signatureBlock", signatures: STATE.signatures });
+
+  return blocks;
+}
+
+function ampleurLabelFromValue(v) {
+  const found = AMPLEUR.find(a => a.v === v);
+  return found ? found.l : v;
+}
+
+/* ============================================================================
+   EXPORT — APERÇU IMPRESSION / PDF
+   Ouvre une fenêtre dédiée contenant une mise en page imprimable construite
+   à partir des mêmes blocs que l'export Word, puis déclenche window.print()
+   (l'utilisateur choisit "Enregistrer en PDF" depuis la boîte de dialogue
+   d'impression de son navigateur).
+   ============================================================================ */
+
+function exportPrintView() {
+  const blocks = buildReportBlocks();
+  const win = window.open("", "_blank");
+  if (!win) { showToast("Le navigateur a bloqué l'ouverture de la fenêtre d'impression."); return; }
+
+  const doc = win.document;
+  doc.open();
+  doc.write("<!DOCTYPE html><html lang=\"fr\"><head><meta charset=\"UTF-8\"><title>État des lieux — Impression</title></head><body></body></html>");
+  doc.close();
+
+  const style = doc.createElement("style");
+  style.textContent = `
+    body{font-family:Calibri,Arial,sans-serif;color:#1c2430;font-size:12.5pt;line-height:1.5;
+      max-width:880px;margin:0 auto;padding:30px 36px 60px;}
+    h1.title{font-size:19pt;color:#13294b;margin:0 0 4px;text-align:center;}
+    p.subtitle{font-size:10.5pt;color:#5b6472;text-align:center;margin:0 0 4px;}
+    h1.h1{font-size:14.5pt;color:#13294b;border-bottom:2px solid #a78a55;padding-bottom:5px;margin:26px 0 12px;}
+    h2.h2{font-size:12.5pt;color:#13294b;margin:18px 0 8px;}
+    h3.h3{font-size:11.5pt;color:#1d3a63;margin:14px 0 6px;font-weight:700;}
+    p.body-p{margin:0 0 10px;text-align:justify;}
+    p.body-p.italic{font-style:italic;color:#5b6472;}
+    table.kv{width:100%;border-collapse:collapse;margin-bottom:10px;}
+    table.kv td{border:1px solid #dde1e7;padding:6px 9px;font-size:10.8pt;vertical-align:top;}
+    table.kv td.k{width:34%;font-weight:700;background:#f6f4ec;color:#13294b;}
+    .absent-line{font-size:10.8pt;color:#8a93a0;margin:0 0 8px;font-style:italic;}
+    .photo-grid{display:flex;flex-wrap:wrap;gap:8px;margin:6px 0 14px;}
+    .photo-grid img{width:140px;height:140px;object-fit:cover;border:1px solid #dde1e7;border-radius:4px;}
+    .photo-caption{font-size:9.5pt;color:#8a93a0;width:100%;margin-top:-2px;margin-bottom:6px;}
+    .sig-grid{display:flex;gap:16px;flex-wrap:wrap;margin-top:10px;}
+    .sig-block{flex:1;min-width:200px;}
+    .sig-block .role{font-size:10.5pt;font-weight:700;color:#13294b;margin-bottom:6px;}
+    .sig-block img{max-width:220px;border:1px solid #dde1e7;border-radius:4px;background:#fff;}
+    .sig-block .none{font-size:10pt;color:#8a93a0;font-style:italic;border:1px dashed #dde1e7;border-radius:4px;padding:24px 10px;text-align:center;}
+    @page{margin:18mm;}
+    @media print{ body{padding:0;max-width:none;} }
+  `;
+  doc.head.appendChild(style);
+
+  blocks.forEach(b => appendBlockToPrintDoc(doc, doc.body, b));
+
+  // léger délai pour laisser le navigateur peindre les images base64 avant impression
+  setTimeout(() => { win.focus(); win.print(); }, 450);
+}
+
+function appendBlockToPrintDoc(doc, container, b) {
+  switch (b.type) {
+    case "title":
+      container.appendChild(make(doc, "h1", "title", b.text)); break;
+    case "subtitle":
+      container.appendChild(make(doc, "p", "subtitle", b.text)); break;
+    case "heading1":
+      container.appendChild(make(doc, "h1", "h1", b.text)); break;
+    case "heading2":
+      container.appendChild(make(doc, "h2", "h2", b.text)); break;
+    case "heading3":
+      container.appendChild(make(doc, "h3", "h3", b.text)); break;
+    case "paragraph":
+      container.appendChild(make(doc, "p", "body-p" + (b.italic ? " italic" : ""), b.text)); break;
+    case "keyvalue": {
+      const table = doc.createElement("table");
+      table.className = "kv";
+      b.rows.forEach(r => {
+        const tr = doc.createElement("tr");
+        const td1 = doc.createElement("td"); td1.className = "k"; td1.textContent = r[0];
+        const td2 = doc.createElement("td"); td2.textContent = r[1] || "—";
+        tr.appendChild(td1); tr.appendChild(td2);
+        table.appendChild(tr);
+      });
+      container.appendChild(table);
+      break;
+    }
+    case "elementAbsent": {
+      const p = doc.createElement("p");
+      p.className = "absent-line";
+      p.textContent = b.label + " : absent / sans objet" + (b.note ? " — " + b.note : "");
+      container.appendChild(p);
+      break;
+    }
+    case "photoGrid": {
+      const grid = doc.createElement("div");
+      grid.className = "photo-grid";
+      b.photos.forEach(p => { const img = doc.createElement("img"); img.src = p.data; grid.appendChild(img); });
+      container.appendChild(grid);
+      const cap = doc.createElement("div");
+      cap.className = "photo-caption";
+      cap.textContent = b.caption || "";
+      container.appendChild(cap);
+      break;
+    }
+    case "signatureBlock": {
+      const grid = doc.createElement("div");
+      grid.className = "sig-grid";
+      ["expert", "bailleur", "locataire"].forEach(role => {
+        const block = doc.createElement("div");
+        block.className = "sig-block";
+        const roleP = doc.createElement("div");
+        roleP.className = "role";
+        roleP.textContent = SIGNATURE_ROLE_LABEL[role];
+        block.appendChild(roleP);
+        if (b.signatures[role]) {
+          const img = doc.createElement("img");
+          img.src = b.signatures[role];
+          block.appendChild(img);
+        } else {
+          const none = doc.createElement("div");
+          none.className = "none";
+          none.textContent = "Non signé";
+          block.appendChild(none);
+        }
+        grid.appendChild(block);
+      });
+      container.appendChild(grid);
+      break;
+    }
+  }
+}
+
+function make(doc, tag, cls, text) {
+  const n = doc.createElement(tag);
+  n.className = cls;
+  n.textContent = text;
+  return n;
+}
+
+/* ============================================================================
+   EXPORT / IMPORT — SAUVEGARDE JSON DE LA SAISIE
+   ============================================================================ */
+
+function exportJson() {
+  const dataStr = JSON.stringify(STATE, null, 2);
+  const blob = new Blob([dataStr], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  const safeAddr = (STATE.meta.adresse || "logement").replace(/[^a-z0-9]+/gi, "_").slice(0, 40);
+  a.href = url;
+  a.download = "EDL_CEL47_" + safeAddr + "_" + dateStampForFilename() + ".json";
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  setTimeout(() => URL.revokeObjectURL(url), 4000);
+  showToast("Fichier de saisie exporté.");
+}
+
+function dateStampForFilename() {
+  const d = new Date();
+  const p2 = n => String(n).padStart(2, "0");
+  return d.getFullYear() + p2(d.getMonth() + 1) + p2(d.getDate()) + "_" + p2(d.getHours()) + p2(d.getMinutes());
+}
+
+function handleImportFile(file) {
+  const reader = new FileReader();
+  reader.onload = function (e) {
+    try {
+      const parsed = JSON.parse(e.target.result);
+      if (!parsed || !parsed.meta || !Array.isArray(parsed.rooms)) {
+        showToast("Fichier non reconnu comme une saisie CEL-47 valide.");
+        return;
+      }
+      openConfirmModal(
+        "Reprendre cette saisie ?",
+        "Le brouillon en cours sera remplacé par le contenu du fichier importé.",
+        () => {
+          STATE = mergeWithEmptyState(parsed);
+          UI.openElemKeys = new Set();
+          saveState();
+          UI.activeSection = "identification";
+          renderApp();
+          showToast("Saisie importée avec succès.");
+        }
+      );
+    } catch (err) {
+      showToast("Le fichier sélectionné n'est pas un JSON valide.");
+    }
+  };
+  reader.readAsText(file);
+}
+
+/* Fusionne un état importé (potentiellement issu d'une version antérieure
+   du référentiel) avec une structure vide à jour, afin d'éviter les
+   erreurs si de nouveaux champs ont été ajoutés depuis l'export. */
+function mergeWithEmptyState(imported) {
+  const base = emptyState();
+  return Object.assign(base, imported, {
+    meta: Object.assign(base.meta, imported.meta || {}, {
+      presence_parties: Object.assign(base.meta.presence_parties, (imported.meta && imported.meta.presence_parties) || {})
+    }),
+    plomb: Object.assign(base.plomb, imported.plomb || {}, {
+      photos: (imported.plomb && Array.isArray(imported.plomb.photos)) ? imported.plomb.photos : base.plomb.photos
+    })
+  });
+}
+
+/* ============================================================================
+   MINI-MOTEUR ZIP (méthode "store", sans compression)
+   Un fichier .docx est une archive ZIP contenant des fichiers XML. Le format
+   ZIP "store" (sans compression deflate) est parfaitement valide et lu
+   nativement par Word/LibreOffice ; il évite toute dépendance externe pour
+   produire l'export Word directement dans le navigateur.
+   Implémentation autonome, sans bibliothèque tierce.
+   ============================================================================ */
+
+const CRC32_TABLE = (function () {
+  const table = new Uint32Array(256);
+  for (let n = 0; n < 256; n++) {
+    let c = n;
+    for (let k = 0; k < 8; k++) c = (c & 1) ? (0xEDB88320 ^ (c >>> 1)) : (c >>> 1);
+    table[n] = c >>> 0;
+  }
+  return table;
+})();
+
+function crc32(bytes) {
+  let crc = 0xFFFFFFFF;
+  for (let i = 0; i < bytes.length; i++) {
+    crc = CRC32_TABLE[(crc ^ bytes[i]) & 0xFF] ^ (crc >>> 8);
+  }
+  return (crc ^ 0xFFFFFFFF) >>> 0;
+}
+
+function strToBytes(str) {
+  return new TextEncoder().encode(str);
+}
+
+function dosDateTime(date) {
+  const time = ((date.getHours() & 0x1F) << 11) | ((date.getMinutes() & 0x3F) << 5) | ((date.getSeconds() >> 1) & 0x1F);
+  const yr = date.getFullYear() - 1980;
+  const dosDate = ((yr & 0x7F) << 9) | (((date.getMonth() + 1) & 0xF) << 5) | (date.getDate() & 0x1F);
+  return { time: time & 0xFFFF, date: dosDate & 0xFFFF };
+}
+
+/* Construit une archive ZIP (store) à partir d'une liste {name, data(Uint8Array)}.
+   Retourne un Blob prêt à être téléchargé. */
+function buildZip(files) {
+  const now = new Date();
+  const { time, date } = dosDateTime(now);
+  const localParts = [];
+  const centralParts = [];
+  let offset = 0;
+
+  files.forEach(f => {
+    const nameBytes = strToBytes(f.name);
+    const data = f.data;
+    const crc = crc32(data);
+    const size = data.length;
+
+    // Local file header
+    const lh = new DataView(new ArrayBuffer(30));
+    lh.setUint32(0, 0x04034b50, true);   // signature
+    lh.setUint16(4, 20, true);           // version needed
+    lh.setUint16(6, 0, true);            // flags
+    lh.setUint16(8, 0, true);            // compression = store
+    lh.setUint16(10, time, true);
+    lh.setUint16(12, date, true);
+    lh.setUint32(14, crc, true);
+    lh.setUint32(18, size, true);        // compressed size
+    lh.setUint32(22, size, true);        // uncompressed size
+    lh.setUint16(26, nameBytes.length, true);
+    lh.setUint16(28, 0, true);           // extra field length
+
+    localParts.push(new Uint8Array(lh.buffer));
+    localParts.push(nameBytes);
+    localParts.push(data);
+
+    // Central directory header
+    const ch = new DataView(new ArrayBuffer(46));
+    ch.setUint32(0, 0x02014b50, true);
+    ch.setUint16(4, 20, true);
+    ch.setUint16(6, 20, true);
+    ch.setUint16(8, 0, true);
+    ch.setUint16(10, 0, true);
+    ch.setUint16(12, time, true);
+    ch.setUint16(14, date, true);
+    ch.setUint32(16, crc, true);
+    ch.setUint32(20, size, true);
+    ch.setUint32(24, size, true);
+    ch.setUint16(28, nameBytes.length, true);
+    ch.setUint16(30, 0, true);
+    ch.setUint16(32, 0, true);
+    ch.setUint16(34, 0, true);
+    ch.setUint16(36, 0, true);
+    ch.setUint32(38, 0, true);
+    ch.setUint32(42, offset, true);
+
+    centralParts.push(new Uint8Array(ch.buffer));
+    centralParts.push(nameBytes);
+
+    offset += lh.buffer.byteLength + nameBytes.length + size;
+  });
+
+  const localBlobParts = localParts;
+  const centralStart = offset;
+  let centralSize = 0;
+  centralParts.forEach(p => centralSize += p.length);
+
+  const eocd = new DataView(new ArrayBuffer(22));
+  eocd.setUint32(0, 0x06054b50, true);
+  eocd.setUint16(4, 0, true);
+  eocd.setUint16(6, 0, true);
+  eocd.setUint16(8, files.length, true);
+  eocd.setUint16(10, files.length, true);
+  eocd.setUint32(12, centralSize, true);
+  eocd.setUint32(16, centralStart, true);
+  eocd.setUint16(20, 0, true);
+
+  const allParts = localBlobParts.concat(centralParts).concat([new Uint8Array(eocd.buffer)]);
+  return new Blob(allParts, { type: "application/vnd.openxmlformats-officedocument.wordprocessingml.document" });
+}
+
+/* ============================================================================
+   EXPORT — DOCUMENT WORD (.docx) NATIF
+   Génère un fichier .docx valide (OOXML) directement dans le navigateur,
+   à partir des mêmes blocs structurés que l'export impression/PDF.
+   Aucune dépendance externe : XML et ZIP entièrement produits en JS.
+   ============================================================================ */
+
+function xmlEscape(str) {
+  if (str === null || str === undefined) return "";
+  return String(str)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&apos;");
+}
+
+/* Découpe une dataURL base64 "data:image/jpeg;base64,XXXX" en bytes bruts. */
+function dataUrlToBytes(dataUrl) {
+  const comma = dataUrl.indexOf(",");
+  const meta = dataUrl.slice(5, comma);          // ex: image/jpeg;base64
+  const isBase64 = meta.indexOf("base64") !== -1;
+  const mime = meta.split(";")[0];
+  const payload = dataUrl.slice(comma + 1);
+  let bytes;
+  if (isBase64) {
+    const binStr = atob(payload);
+    bytes = new Uint8Array(binStr.length);
+    for (let i = 0; i < binStr.length; i++) bytes[i] = binStr.charCodeAt(i);
+  } else {
+    bytes = strToBytes(decodeURIComponent(payload));
+  }
+  return { bytes: bytes, mime: mime };
+}
+
+/* Lit la largeur/hauteur réelle (en px) d'une dataURL image, de façon
+   synchrone via un Image() préchargé — utilisé pour calculer le ratio
+   d'affichage dans le document Word. Retourne une Promise. */
+function readImageDims(dataUrl) {
+  return new Promise(resolve => {
+    const img = new Image();
+    img.onload = () => resolve({ w: img.naturalWidth || 800, h: img.naturalHeight || 600 });
+    img.onerror = () => resolve({ w: 800, h: 600 });
+    img.src = dataUrl;
+  });
+}
+
+const EMU_PER_PX = 9525; // valeur standard OOXML (96 dpi)
+const DOCX_PHOTO_WIDTH_PX = 220; // largeur d'affichage cible dans le document
+
+async function exportDocx() {
+  showToast("Génération du document Word en cours…");
+  try {
+    const blocks = buildReportBlocks();
+
+    // 1) Collecte de toutes les photos de pièces référencées dans les blocs,
+    //    dans l'ordre d'apparition, ainsi que les signatures (traitées via
+    //    le même mécanisme mais adressées par dataURL plutôt que par file).
+    const photoRefs = [];
+    blocks.forEach(b => {
+      if (b.type === "photoGrid") {
+        b.photos.forEach(p => photoRefs.push(p.data));
+      }
+    });
+    const signatureUrls = ["expert", "bailleur", "locataire"]
+      .map(role => STATE.signatures[role])
+      .filter(Boolean);
+
+    // 2) Pré-calcul des dimensions de chaque image (nécessaire pour <wp:extent>),
+    //    photos de pièces et signatures confondues.
+    const allUrlsForDims = photoRefs.concat(signatureUrls);
+    const allDims = await Promise.all(allUrlsForDims.map(readImageDims));
+    const dimsByUrl = new Map();
+    allUrlsForDims.forEach((url, i) => { if (!dimsByUrl.has(url)) dimsByUrl.set(url, allDims[i]); });
+
+    // 3) Génère le XML du corps de document. Un cache (par dataURL) garantit
+    //    qu'une même image n'est jamais embarquée deux fois dans l'archive,
+    //    même si elle apparaît dans plusieurs blocs.
+    const mediaFiles = []; // {name, data, mime}
+    const relationships = []; // {id, target}
+    const relIdCache = new Map(); // dataUrl -> relId déjà attribué
+    let relIdCounter = 1;
+
+    function relIdForDataUrl(dataUrl) {
+      if (relIdCache.has(dataUrl)) return relIdCache.get(dataUrl);
+      const { bytes, mime } = dataUrlToBytes(dataUrl);
+      const ext = mime.indexOf("png") !== -1 ? "png" : "jpeg";
+      const name = "image" + (mediaFiles.length + 1) + "." + ext;
+      mediaFiles.push({ name: name, data: bytes, mime: mime });
+      const relId = "rId" + (1000 + relIdCounter++); // namespace dédié aux images pour éviter collision avec les rels de base
+      relationships.push({ id: relId, target: "media/" + name });
+      relIdCache.set(dataUrl, relId);
+      return relId;
+    }
+
+    let photoCursor = 0;
+    // photoCallback() sans argument : consomme la prochaine photo de la file (cas photoGrid)
+    // photoCallback.forSignature(dataUrl) : résout une image précise par sa dataURL (cas signatures)
+    function photoCallback() {
+      const dataUrl = photoRefs[photoCursor];
+      photoCursor++;
+      return { relId: relIdForDataUrl(dataUrl), dims: dimsByUrl.get(dataUrl) };
+    }
+    photoCallback.forSignature = function (dataUrl) {
+      return { relId: relIdForDataUrl(dataUrl), dims: dimsByUrl.get(dataUrl) };
+    };
+
+    const bodyXmlParts = blocks.map(b => blockToOoxml(b, photoCallback));
+
+    const documentXml = wrapDocumentXml(bodyXmlParts.join(""));
+    const documentRelsXml = buildDocumentRelsXml(relationships);
+    const contentTypesXml = buildContentTypesXml(mediaFiles);
+
+    // 4) Assemble l'archive zip complète
+    const files = [
+      { name: "[Content_Types].xml", data: strToBytes(contentTypesXml) },
+      { name: "_rels/.rels", data: strToBytes(RELS_ROOT_XML) },
+      { name: "word/document.xml", data: strToBytes(documentXml) },
+      { name: "word/_rels/document.xml.rels", data: strToBytes(documentRelsXml) },
+      { name: "word/styles.xml", data: strToBytes(STYLES_XML) },
+      { name: "docProps/core.xml", data: strToBytes(buildCoreXml()) },
+      { name: "docProps/app.xml", data: strToBytes(APP_XML) }
+    ];
+    mediaFiles.forEach(mf => files.push({ name: "word/media/" + mf.name, data: mf.data }));
+
+    const blob = buildZip(files);
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    const safeAddr = (STATE.meta.adresse || "logement").replace(/[^a-z0-9]+/gi, "_").slice(0, 40);
+    a.href = url;
+    a.download = "EDL_CEL47_" + safeAddr + "_" + dateStampForFilename() + ".docx";
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(() => URL.revokeObjectURL(url), 5000);
+    showToast("Document Word généré avec succès.");
+  } catch (err) {
+    console.error(err);
+    showToast("Erreur lors de la génération du document Word. Voir la console pour le détail.");
+  }
+}
+
+/* ============================================================================
+   TRADUCTION DES BLOCS EN XML OOXML (word/document.xml)
+   ============================================================================ */
+
+const DOCX_COLOR_NAVY = "13294B";
+const DOCX_COLOR_GOLD = "A78A55";
+const DOCX_COLOR_SOFT = "5B6472";
+
+function ooxmlParagraph(runsXml, pPrXml) {
+  return "<w:p>" + (pPrXml || "") + runsXml + "</w:p>";
+}
+
+function ooxmlRun(text, rPrXml) {
+  return "<w:r>" + (rPrXml || "") + "<w:t xml:space=\"preserve\">" + xmlEscape(text) + "</w:t></w:r>";
+}
+
+function blockToOoxml(block, photoCallback) {
+  switch (block.type) {
+
+    case "title":
+      return ooxmlParagraph(
+        ooxmlRun(block.text, "<w:rPr><w:b/><w:color w:val=\"" + DOCX_COLOR_NAVY + "\"/><w:sz w:val=\"34\"/></w:rPr>"),
+        "<w:pPr><w:jc w:val=\"center\"/><w:spacing w:after=\"60\"/></w:pPr>"
+      );
+
+    case "subtitle":
+      return ooxmlParagraph(
+        ooxmlRun(block.text, "<w:rPr><w:color w:val=\"" + DOCX_COLOR_SOFT + "\"/><w:sz w:val=\"19\"/></w:rPr>"),
+        "<w:pPr><w:jc w:val=\"center\"/><w:spacing w:after=\"60\"/></w:pPr>"
+      );
+
+    case "heading1":
+      return ooxmlParagraph(
+        ooxmlRun(block.text, "<w:rPr><w:b/><w:color w:val=\"" + DOCX_COLOR_NAVY + "\"/><w:sz w:val=\"27\"/></w:rPr>"),
+        "<w:pPr><w:spacing w:before=\"360\" w:after=\"160\"/><w:pBdr><w:bottom w:val=\"single\" w:sz=\"8\" w:space=\"4\" w:color=\"" + DOCX_COLOR_GOLD + "\"/></w:pBdr></w:pPr>"
+      );
+
+    case "heading2":
+      return ooxmlParagraph(
+        ooxmlRun(block.text, "<w:rPr><w:b/><w:color w:val=\"" + DOCX_COLOR_NAVY + "\"/><w:sz w:val=\"23\"/></w:rPr>"),
+        "<w:pPr><w:spacing w:before=\"240\" w:after=\"120\"/></w:pPr>"
+      );
+
+    case "heading3":
+      return ooxmlParagraph(
+        ooxmlRun(block.text, "<w:rPr><w:b/><w:color w:val=\"1D3A63\"/><w:sz w:val=\"21\"/></w:rPr>"),
+        "<w:pPr><w:spacing w:before=\"160\" w:after=\"90\"/></w:pPr>"
+      );
+
+    case "paragraph":
+      return ooxmlParagraph(
+        ooxmlRun(block.text, block.italic ? "<w:rPr><w:i/><w:color w:val=\"" + DOCX_COLOR_SOFT + "\"/></w:rPr>" : ""),
+        "<w:pPr><w:spacing w:after=\"160\"/><w:jc w:val=\"both\"/></w:pPr>"
+      );
+
+    case "elementAbsent":
+      return ooxmlParagraph(
+        ooxmlRun(block.label + " : absent / sans objet" + (block.note ? " — " + block.note : ""),
+          "<w:rPr><w:i/><w:color w:val=\"8A93A0\"/><w:sz w:val=\"20\"/></w:rPr>"),
+        "<w:pPr><w:spacing w:after=\"140\"/></w:pPr>"
+      );
+
+    case "keyvalue":
+      return ooxmlKeyValueTable(block.rows);
+
+    case "photoGrid":
+      return ooxmlPhotoGrid(block, photoCallback);
+
+    case "signatureBlock":
+      return ooxmlSignatureBlock(block.signatures, photoCallback.forSignature);
+
+    default:
+      return "";
+  }
+}
+
+/* ---------- Tableau clé/valeur ---------- */
+function ooxmlKeyValueTable(rows) {
+  const trXml = rows.map(r => {
+    const key = r[0], val = r[1] || "—";
+    const tcKey = "<w:tc><w:tcPr><w:tcW w:w=\"2400\" w:type=\"dxa\"/><w:shd w:val=\"clear\" w:fill=\"F6F4EC\"/></w:tcPr>" +
+      ooxmlParagraph(ooxmlRun(key, "<w:rPr><w:b/><w:color w:val=\"" + DOCX_COLOR_NAVY + "\"/><w:sz w:val=\"19\"/></w:rPr>")) +
+      "</w:tc>";
+    const tcVal = "<w:tc><w:tcPr><w:tcW w:w=\"6800\" w:type=\"dxa\"/></w:tcPr>" +
+      ooxmlParagraph(ooxmlRun(val, "<w:rPr><w:sz w:val=\"19\"/></w:rPr>")) +
+      "</w:tc>";
+    return "<w:tr>" + tcKey + tcVal + "</w:tr>";
+  }).join("");
+
+  return "<w:tbl>" +
+    "<w:tblPr><w:tblW w:w=\"9200\" w:type=\"dxa\"/><w:tblBorders>" +
+    "<w:top w:val=\"single\" w:sz=\"4\" w:color=\"DDE1E7\"/><w:left w:val=\"single\" w:sz=\"4\" w:color=\"DDE1E7\"/>" +
+    "<w:bottom w:val=\"single\" w:sz=\"4\" w:color=\"DDE1E7\"/><w:right w:val=\"single\" w:sz=\"4\" w:color=\"DDE1E7\"/>" +
+    "<w:insideH w:val=\"single\" w:sz=\"4\" w:color=\"DDE1E7\"/><w:insideV w:val=\"single\" w:sz=\"4\" w:color=\"DDE1E7\"/>" +
+    "</w:tblBorders></w:tblPr>" +
+    "<w:tblGrid><w:gridCol w:w=\"2400\"/><w:gridCol w:w=\"6800\"/></w:tblGrid>" +
+    trXml +
+    "</w:tbl>" +
+    ooxmlParagraph("", "<w:pPr><w:spacing w:after=\"120\"/></w:pPr>"); // espace après tableau (Word exige un paragraphe après un tbl en fin de section)
+}
+
+/* ---------- Grille de photos ---------- */
+function ooxmlPhotoGrid(block, photoCallback) {
+  const drawings = block.photos.map(() => {
+    const ref = photoCallback(); // {relId, dims:{w,h}}
+    const ratio = ref.dims.h / ref.dims.w;
+    const widthPx = DOCX_PHOTO_WIDTH_PX;
+    const heightPx = Math.round(widthPx * ratio);
+    const widthEmu = widthPx * EMU_PER_PX;
+    const heightEmu = heightPx * EMU_PER_PX;
+    const docPrId = Math.floor(Math.random() * 1000000);
+
+    return "<w:r><w:drawing><wp:inline distT=\"0\" distB=\"0\" distL=\"0\" distR=\"0\">" +
+      "<wp:extent cx=\"" + widthEmu + "\" cy=\"" + heightEmu + "\"/>" +
+      "<wp:effectExtent l=\"0\" t=\"0\" r=\"0\" b=\"0\"/>" +
+      "<wp:docPr id=\"" + docPrId + "\" name=\"Photo" + docPrId + "\"/>" +
+      "<a:graphic xmlns:a=\"http://schemas.openxmlformats.org/drawingml/2006/main\">" +
+      "<a:graphicData uri=\"http://schemas.openxmlformats.org/drawingml/2006/picture\">" +
+      "<pic:pic xmlns:pic=\"http://schemas.openxmlformats.org/drawingml/2006/picture\">" +
+      "<pic:nvPicPr><pic:cNvPr id=\"" + docPrId + "\" name=\"Photo" + docPrId + "\"/><pic:cNvPicPr/></pic:nvPicPr>" +
+      "<pic:blipFill><a:blip r:embed=\"" + ref.relId + "\"/><a:stretch><a:fillRect/></a:stretch></pic:blipFill>" +
+      "<pic:spPr><a:xfrm><a:off x=\"0\" y=\"0\"/><a:ext cx=\"" + widthEmu + "\" cy=\"" + heightEmu + "\"/></a:xfrm>" +
+      "<a:prstGeom prst=\"rect\"><a:avLst/></a:prstGeom></pic:spPr>" +
+      "</pic:pic></a:graphicData></a:graphic></wp:inline></w:drawing></w:r>" +
+      "<w:r><w:tab/></w:r>"; // léger espacement horizontal entre photos
+  }).join("");
+
+  const photosPara = ooxmlParagraph(drawings, "<w:pPr><w:spacing w:after=\"40\"/></w:pPr>");
+  const captionPara = block.caption ? ooxmlParagraph(
+    ooxmlRun(block.caption, "<w:rPr><w:i/><w:color w:val=\"8A93A0\"/><w:sz w:val=\"17\"/></w:rPr>"),
+    "<w:pPr><w:spacing w:after=\"180\"/></w:pPr>"
+  ) : "";
+
+  return photosPara + captionPara;
+}
+
+/* ---------- Bloc de signatures (3 colonnes via tableau) ----------
+   Les signatures (images PNG base64) utilisent le même mécanisme de
+   relation d'image que les photos de pièces, via photoCallback, afin
+   d'éviter tout système de placeholder à remplacer après coup. */
+function ooxmlSignatureBlock(signatures, photoCallback) {
+  const roles = ["expert", "bailleur", "locataire"];
+  const SIG_WIDTH_PX = 180;
+
+  const cellsXml = roles.map(role => {
+    const label = SIGNATURE_ROLE_LABEL[role];
+    const labelPara = ooxmlParagraph(
+      ooxmlRun(label, "<w:rPr><w:b/><w:color w:val=\"" + DOCX_COLOR_NAVY + "\"/><w:sz w:val=\"18\"/></w:rPr>"),
+      "<w:pPr><w:spacing w:after=\"100\"/></w:pPr>"
+    );
+
+    let bodyXml;
+    if (signatures[role]) {
+      const ref = photoCallback(signatures[role]); // {relId, dims:{w,h}}
+      const ratio = ref.dims.h / ref.dims.w;
+      const widthEmu = SIG_WIDTH_PX * EMU_PER_PX;
+      const heightEmu = Math.round(SIG_WIDTH_PX * ratio) * EMU_PER_PX;
+      const docPrId = Math.floor(Math.random() * 1000000);
+      const drawingXml = "<w:r><w:drawing><wp:inline distT=\"0\" distB=\"0\" distL=\"0\" distR=\"0\">" +
+        "<wp:extent cx=\"" + widthEmu + "\" cy=\"" + heightEmu + "\"/>" +
+        "<wp:effectExtent l=\"0\" t=\"0\" r=\"0\" b=\"0\"/>" +
+        "<wp:docPr id=\"" + docPrId + "\" name=\"Signature" + docPrId + "\"/>" +
+        "<a:graphic xmlns:a=\"http://schemas.openxmlformats.org/drawingml/2006/main\">" +
+        "<a:graphicData uri=\"http://schemas.openxmlformats.org/drawingml/2006/picture\">" +
+        "<pic:pic xmlns:pic=\"http://schemas.openxmlformats.org/drawingml/2006/picture\">" +
+        "<pic:nvPicPr><pic:cNvPr id=\"" + docPrId + "\" name=\"Signature" + docPrId + "\"/><pic:cNvPicPr/></pic:nvPicPr>" +
+        "<pic:blipFill><a:blip r:embed=\"" + ref.relId + "\"/><a:stretch><a:fillRect/></a:stretch></pic:blipFill>" +
+        "<pic:spPr><a:xfrm><a:off x=\"0\" y=\"0\"/><a:ext cx=\"" + widthEmu + "\" cy=\"" + heightEmu + "\"/></a:xfrm>" +
+        "<a:prstGeom prst=\"rect\"><a:avLst/></a:prstGeom></pic:spPr>" +
+        "</pic:pic></a:graphicData></a:graphic></wp:inline></w:drawing></w:r>";
+      bodyXml = ooxmlParagraph(drawingXml);
+    } else {
+      bodyXml = ooxmlParagraph(ooxmlRun("Non signé", "<w:rPr><w:i/><w:color w:val=\"8A93A0\"/><w:sz w:val=\"18\"/></w:rPr>"));
+    }
+
+    return "<w:tc><w:tcPr><w:tcW w:w=\"3000\" w:type=\"dxa\"/></w:tcPr>" + labelPara + bodyXml + "</w:tc>";
+  }).join("");
+
+  return "<w:tbl>" +
+    "<w:tblPr><w:tblW w:w=\"9200\" w:type=\"dxa\"/><w:tblBorders>" +
+    "<w:top w:val=\"none\"/><w:left w:val=\"none\"/><w:bottom w:val=\"none\"/><w:right w:val=\"none\"/>" +
+    "<w:insideH w:val=\"none\"/><w:insideV w:val=\"none\"/></w:tblBorders></w:tblPr>" +
+    "<w:tblGrid><w:gridCol w:w=\"3066\"/><w:gridCol w:w=\"3066\"/><w:gridCol w:w=\"3068\"/></w:tblGrid>" +
+    "<w:tr>" + cellsXml + "</w:tr>" +
+    "</w:tbl>";
+}
+
+/* ============================================================================
+   ENVELOPPES XML DU PAQUET OOXML (.docx)
+   ============================================================================ */
+
+/* Enveloppe le corps du document avec les déclarations XML, les namespaces
+   nécessaires (w, r, wp, a, pic) et les propriétés de section (A4, marges). */
+function wrapDocumentXml(bodyXml) {
+  return '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' +
+    '<w:document ' +
+    'xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main" ' +
+    'xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" ' +
+    'xmlns:wp="http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing" ' +
+    'xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" ' +
+    'xmlns:pic="http://schemas.openxmlformats.org/drawingml/2006/picture">' +
+    '<w:body>' +
+    bodyXml +
+    '<w:sectPr>' +
+    '<w:pgSz w:w="11906" w:h="16838"/>' +                 // A4 en twentieths of a point (DXA)
+    '<w:pgMar w:top="1134" w:right="1134" w:bottom="1134" w:left="1134" w:header="709" w:footer="709" w:gutter="0"/>' +
+    '</w:sectPr>' +
+    '</w:body>' +
+    '</w:document>';
+}
+
+/* Relations du document principal : une par image (photo ou signature) embarquée,
+   plus les styles, toujours nécessaires. */
+function buildDocumentRelsXml(relationships) {
+  const relsXml = relationships.map(r =>
+    '<Relationship Id="' + r.id + '" ' +
+    'Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image" ' +
+    'Target="' + r.target + '"/>'
+  ).join("");
+
+  return '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' +
+    '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">' +
+    '<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/>' +
+    relsXml +
+    '</Relationships>';
+}
+
+/* [Content_Types].xml : déclare les extensions globales (xml, rels) et un
+   Default par type d'image effectivement utilisé dans le document (png/jpeg),
+   plus les Override pour les parties XML nommées explicitement. */
+function buildContentTypesXml(mediaFiles) {
+  const extsUsed = new Set(mediaFiles.map(mf => mf.name.split(".").pop()));
+  const imageDefaults = Array.from(extsUsed).map(ext => {
+    const ct = ext === "png" ? "image/png" : "image/jpeg";
+    return '<Default Extension="' + ext + '" ContentType="' + ct + '"/>';
+  }).join("");
+
+  return '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' +
+    '<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">' +
+    '<Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>' +
+    '<Default Extension="xml" ContentType="application/xml"/>' +
+    imageDefaults +
+    '<Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/>' +
+    '<Override PartName="/word/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.styles+xml"/>' +
+    '<Override PartName="/docProps/core.xml" ContentType="application/vnd.openxmlformats-package.core-properties+xml"/>' +
+    '<Override PartName="/docProps/app.xml" ContentType="application/vnd.openxmlformats-officedocument.extended-properties+xml"/>' +
+    '</Types>';
+}
+
+/* _rels/.rels : relations racine du paquet, pointant vers le document
+   principal et les métadonnées (core/app). Contenu fixe. */
+const RELS_ROOT_XML =
+  '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' +
+  '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">' +
+  '<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/>' +
+  '<Relationship Id="rId2" Type="http://schemas.openxmlformats.org/package/2006/relationships/metadata/core-properties" Target="docProps/core.xml"/>' +
+  '<Relationship Id="rId3" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/extended-properties" Target="docProps/app.xml"/>' +
+  '</Relationships>';
+
+/* word/styles.xml : feuille de styles minimale mais cohérente avec
+   l'identité visuelle CEL-47 (Normal, Heading1/2/3 en teintes navy/gold). */
+const STYLES_XML =
+  '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' +
+  '<w:styles xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main">' +
+  '<w:docDefaults>' +
+  '<w:rPrDefault><w:rPr>' +
+  '<w:rFonts w:ascii="Calibri" w:hAnsi="Calibri" w:cs="Calibri"/>' +
+  '<w:sz w:val="22"/><w:color w:val="1C2430"/>' +
+  '</w:rPr></w:rPrDefault>' +
+  '</w:docDefaults>' +
+  '<w:style w:type="paragraph" w:default="1" w:styleId="Normal">' +
+  '<w:name w:val="Normal"/>' +
+  '<w:pPr><w:spacing w:after="120" w:line="276" w:lineRule="auto"/></w:pPr>' +
+  '</w:style>' +
+  '<w:style w:type="paragraph" w:styleId="Heading1">' +
+  '<w:name w:val="heading 1"/><w:basedOn w:val="Normal"/>' +
+  '<w:pPr><w:spacing w:before="360" w:after="160"/></w:pPr>' +
+  '<w:rPr><w:b/><w:color w:val="13294B"/><w:sz w:val="27"/></w:rPr>' +
+  '</w:style>' +
+  '<w:style w:type="paragraph" w:styleId="Heading2">' +
+  '<w:name w:val="heading 2"/><w:basedOn w:val="Normal"/>' +
+  '<w:pPr><w:spacing w:before="240" w:after="120"/></w:pPr>' +
+  '<w:rPr><w:b/><w:color w:val="13294B"/><w:sz w:val="23"/></w:rPr>' +
+  '</w:style>' +
+  '<w:style w:type="paragraph" w:styleId="Heading3">' +
+  '<w:name w:val="heading 3"/><w:basedOn w:val="Normal"/>' +
+  '<w:pPr><w:spacing w:before="160" w:after="90"/></w:pPr>' +
+  '<w:rPr><w:b/><w:color w:val="1D3A63"/><w:sz w:val="21"/></w:rPr>' +
+  '</w:style>' +
+  '<w:style w:type="table" w:default="1" w:styleId="TableNormal">' +
+  '<w:name w:val="Normal Table"/>' +
+  '<w:tblPr><w:tblCellMar>' +
+  '<w:top w:w="40" w:type="dxa"/><w:left w:w="80" w:type="dxa"/>' +
+  '<w:bottom w:w="40" w:type="dxa"/><w:right w:w="80" w:type="dxa"/>' +
+  '</w:tblCellMar></w:tblPr>' +
+  '</w:style>' +
+  '</w:styles>';
+
+/* docProps/core.xml : métadonnées descriptives du document. */
+function buildCoreXml() {
+  const now = new Date().toISOString();
+  const author = STATE.meta.expert_nom || STATE.meta.cabinet_nom || "CEL-47";
+  return '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' +
+    '<cp:coreProperties ' +
+    'xmlns:cp="http://schemas.openxmlformats.org/package/2006/metadata/core-properties" ' +
+    'xmlns:dc="http://purl.org/dc/elements/1.1/" ' +
+    'xmlns:dcterms="http://purl.org/dc/terms/" ' +
+    'xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">' +
+    '<dc:title>' + xmlEscape("État des lieux technique contradictoire") + '</dc:title>' +
+    '<dc:creator>' + xmlEscape(author) + '</dc:creator>' +
+    '<cp:lastModifiedBy>' + xmlEscape(author) + '</cp:lastModifiedBy>' +
+    '<dcterms:created xsi:type="dcterms:W3CDTF">' + now + '</dcterms:created>' +
+    '<dcterms:modified xsi:type="dcterms:W3CDTF">' + now + '</dcterms:modified>' +
+    '</cp:coreProperties>';
+}
+
+/* docProps/app.xml : propriétés étendues minimales (pas besoin de Word réel). */
+const APP_XML =
+  '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' +
+  '<Properties xmlns="http://schemas.openxmlformats.org/officeDocument/2006/extended-properties">' +
+  '<Application>CEL-47 EDL</Application>' +
+  '</Properties>';
+
+/* ============================================================================
+   ÉCOUTEURS D'ÉVÉNEMENTS GLOBAUX (topbar, navigation, import fichier)
+   ============================================================================ */
+
+document.getElementById("btnExportMenu").addEventListener("click", () => {
+  openExportModal();
+});
+
+document.getElementById("btnRestart").addEventListener("click", () => {
+  openConfirmModal(
+    "Démarrer un nouvel état des lieux ?",
+    "Toutes les données saisies dans le brouillon actuel (pièces, photos, réseaux, signatures) seront définitivement effacées de cet appareil.",
+    () => {
+      STATE = emptyState();
+      STATE.createdAt = new Date().toISOString();
+      clearState();
+      UI = { activeSection: "identification", openElemKeys: new Set() };
+      saveState();
+      renderApp();
+      showToast("Nouvel état des lieux démarré.");
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+  );
+});
+
+document.getElementById("btnPrevSection").addEventListener("click", () => gotoSection(-1));
+document.getElementById("btnNextSection").addEventListener("click", () => gotoSection(1));
+
+document.getElementById("hiddenFileImport").addEventListener("change", function () {
+  const file = this.files && this.files[0];
+  if (file) handleImportFile(file);
+  this.value = "";
+});
+
+/* ============================================================================
+   INITIALISATION DE L'APPLICATION AU CHARGEMENT
+   ============================================================================ */
+
+(function initApp() {
+  const restored = loadState();
+  if (restored) {
+    STATE = mergeWithEmptyState(restored);
+    setFooterInfo("Brouillon restauré (dernier enregistrement : " +
+      (STATE.updatedAt ? formatDateTime(new Date(STATE.updatedAt)) : "inconnu") + ")");
+  } else {
+    STATE = emptyState();
+    STATE.createdAt = new Date().toISOString();
+  }
+  renderApp();
+})();
+
+</script>
+</body>
+</html>
