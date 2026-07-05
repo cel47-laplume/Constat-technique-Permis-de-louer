@@ -2507,34 +2507,31 @@ function make(doc, tag, cls, text) {
    EXPORT / IMPORT — SAUVEGARDE JSON DE LA SAISIE
    ============================================================================ */
 
+function exportJsonFallback(blob, filename) {
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  setTimeout(function() { URL.revokeObjectURL(url); }, 1000);
+}
+
 function exportJson() {
   const dataStr = JSON.stringify(STATE, null, 2);
   const blob = new Blob([dataStr], { type: "application/json" });
-  const url = URL.createObjectURL(blob);
   const safeAddr = (STATE.meta.adresse || "logement").replace(/[^a-z0-9]+/gi, "_").slice(0, 40);
   const filename = "CEL47_Constat_" + safeAddr + "_" + dateStampForFilename() + ".json";
+  const file = new File([blob], filename, { type: "application/json" });
 
-  // iOS Safari : utiliser navigator.share si disponible (ouvre le menu de partage natif iOS)
-  if (navigator.share && /iPad|iPhone/i.test(navigator.userAgent)) {
-    const file = new File([blob], filename, { type: "application/json" });
-    navigator.share({ files: [file], title: filename })
-      .catch(function() {
-        // Fallback si share annulé ou non supporté
-        const a = document.createElement("a");
-        a.href = url;
-        a.download = filename;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-      });
+  // iOS Safari : menu de partage natif (kDrive, Mail, Fichiers…)
+  if (navigator.canShare && navigator.canShare({ files: [file] })) {
+    navigator.share({ files: [file], title: filename }).catch(function(err) {
+      if (err.name !== "AbortError") { exportJsonFallback(blob, filename); }
+    });
   } else {
-    // Desktop : téléchargement direct
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = filename;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
+    exportJsonFallback(blob, filename);
   }
   setTimeout(() => URL.revokeObjectURL(url), 4000);
   showToast("Fichier de saisie exporté.");
