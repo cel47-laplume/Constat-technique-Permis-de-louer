@@ -2511,13 +2511,31 @@ function exportJson() {
   const dataStr = JSON.stringify(STATE, null, 2);
   const blob = new Blob([dataStr], { type: "application/json" });
   const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
   const safeAddr = (STATE.meta.adresse || "logement").replace(/[^a-z0-9]+/gi, "_").slice(0, 40);
-  a.href = url;
-  a.download = "EDL_CEL47_" + safeAddr + "_" + dateStampForFilename() + ".json";
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
+  const filename = "CEL47_Constat_" + safeAddr + "_" + dateStampForFilename() + ".json";
+
+  // iOS Safari : utiliser navigator.share si disponible (ouvre le menu de partage natif iOS)
+  if (navigator.share && /iPad|iPhone/i.test(navigator.userAgent)) {
+    const file = new File([blob], filename, { type: "application/json" });
+    navigator.share({ files: [file], title: filename })
+      .catch(function() {
+        // Fallback si share annulé ou non supporté
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+      });
+  } else {
+    // Desktop : téléchargement direct
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+  }
   setTimeout(() => URL.revokeObjectURL(url), 4000);
   showToast("Fichier de saisie exporté.");
 }
