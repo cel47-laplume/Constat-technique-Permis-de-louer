@@ -509,18 +509,18 @@ input:focus,textarea:focus,select:focus{outline:none;border-color:var(--navy);}
   <!-- SECTION : Signatures -->
   <div class="card" id="sec-signatures">
     <h2>Signatures</h2>
-    <p class="sub">Signature tactile — Expert, Bailleur et Locataire.</p>
+    <p class="sub" id="sigSub">Signature tactile — Expert, Bailleur et Locataire.</p>
     <div class="sig-block">
       <div class="elem-name">Expert — Denis Charbonnier</div>
       <canvas class="sig-canvas" data-sig="expert"></canvas>
       <div class="sig-actions"><button type="button" class="btn btn-line btn-sm" data-sigclear="expert">Refaire la signature</button></div>
     </div>
     <div class="sig-block">
-      <div class="elem-name">Bailleur</div>
+      <div class="elem-name" id="sigBailleurLbl">Bailleur</div>
       <canvas class="sig-canvas" data-sig="bailleur"></canvas>
       <div class="sig-actions"><button type="button" class="btn btn-line btn-sm" data-sigclear="bailleur">Refaire la signature</button></div>
     </div>
-    <div class="sig-block">
+    <div class="sig-block" id="sigBlockLocataire">
       <div class="elem-name">Locataire</div>
       <canvas class="sig-canvas" data-sig="locataire"></canvas>
       <div class="sig-actions"><button type="button" class="btn btn-line btn-sm" data-sigclear="locataire">Refaire la signature</button></div>
@@ -868,6 +868,13 @@ function applyTypeVisibility(){
   else if(t==="edl_sortie") modeLbl.textContent="Constat de sortie — comparatif entrée intégré.";
   else if(t==="edl_complet") modeLbl.textContent="Deux colonnes : entrée puis sortie (comparatif intégré).";
   else modeLbl.textContent="";
+  /* Signatures : pas de locataire en APML (constat AVANT mise en location) */
+  var sigLoc = $("#sigBlockLocataire");
+  var sigSub = $("#sigSub");
+  if(sigLoc) sigLoc.style.display = isApml ? "none" : "";
+  if(sigSub) sigSub.textContent = isApml
+    ? "Signature tactile — Expert et Bailleur (constat établi avant mise en location : pas de locataire)."
+    : "Signature tactile — Expert, Bailleur et Locataire.";
   buildNavchips();
 }
 function show(sel, on){ var e=$(sel); if(e) e.style.display = on? "" : "none"; }
