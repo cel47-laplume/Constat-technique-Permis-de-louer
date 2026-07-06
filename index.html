@@ -192,6 +192,20 @@ input:focus,textarea:focus,select:focus{outline:none;border-color:var(--navy);}
 .chip-add{border:1.5px solid var(--navy);background:#fff;color:var(--navy);border-radius:20px;
   padding:0 14px;min-height:42px;font-weight:600;font-size:13px;}
 
+/* ===== Configurateur de pièces ===== */
+.config-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:12px 0;}
+@media(max-width:640px){.config-grid{grid-template-columns:1fr;}}
+.config-row{display:flex;align-items:center;justify-content:space-between;gap:10px;
+  border:1px solid var(--line);border-radius:8px;padding:8px 12px;background:#fafafa;}
+.config-row .cr-lbl{font-weight:600;color:var(--navy);font-size:14px;}
+.config-count{display:flex;align-items:center;gap:8px;}
+.count-btn{width:40px;height:40px;border:1.5px solid var(--navy);background:#fff;color:var(--navy);
+  border-radius:8px;font-size:20px;font-weight:700;line-height:1;display:flex;align-items:center;justify-content:center;}
+.count-val{min-width:28px;text-align:center;font-weight:700;font-size:16px;color:var(--navy);}
+.config-check{width:24px;height:24px;accent-color:var(--lime);}
+.mobilier-tag{display:inline-block;background:#eef6d8;color:var(--lime-d);font-size:10px;
+  font-weight:700;padding:2px 7px;border-radius:10px;margin-left:6px;}
+
 /* ===== Impression PDF ===== */
 @page{margin:14mm 12mm 18mm;}
 @media print{
@@ -353,6 +367,12 @@ input:focus,textarea:focus,select:focus{outline:none;border-color:var(--navy);}
         <button type="button" class="seg-btn" data-val="maison">Maison</button>
         <button type="button" class="seg-btn" data-val="appartement">Appartement</button>
       </div></div>
+    <div class="field" id="fieldMeuble"><label>Location meublée ?</label>
+      <div class="seg" data-seg="bien.meuble" data-segtype="bool">
+        <button type="button" class="seg-btn" data-val="false">Non meublé</button>
+        <button type="button" class="seg-btn" data-val="true">Meublé</button>
+      </div>
+      <p class="inline-note">En meublé, l'inventaire du mobilier obligatoire (décret n°2015-981) est ajouté aux pièces concernées.</p></div>
     <div class="grid3">
       <div class="field"><label>Période de construction</label><input data-bind="bien.periode_construction" type="text" placeholder="ex. avant 1949"></div>
       <div class="field"><label>Étage</label><input data-bind="bien.etage" type="text"></div>
@@ -476,8 +496,32 @@ input:focus,textarea:focus,select:focus{outline:none;border-color:var(--navy);}
     <div class="field"><label>Date d'entrée</label><input data-bind="locataire.date_entree" type="date"></div>
   </div>
 
-  <!-- SECTION : Grille APML -->
-  <div class="card" id="sec-apml">
+  <!-- SECTION : Bail (EDL uniquement) -->
+  <div class="card" id="sec-bail">
+    <h2>Bail</h2>
+    <p class="sub">Références du contrat de location.</p>
+    <div class="grid2">
+      <div class="field"><label>Type de bail</label>
+        <select data-bind="bail.type_bail">
+          <option value="">—</option>
+          <option value="nu">Location nue (loi 89-462)</option>
+          <option value="meuble">Location meublée (art. 25-3 s.)</option>
+          <option value="mobilite">Bail mobilité (loi ELAN)</option>
+          <option value="etudiant">Bail étudiant meublé (9 mois)</option>
+          <option value="code_civil">Bail de droit commun (Code civil)</option>
+        </select></div>
+      <div class="field"><label>Référence du bail</label><input data-bind="bail.ref_bail" type="text"></div>
+    </div>
+    <div class="grid3">
+      <div class="field"><label>Date de signature</label><input data-bind="bail.date_signature" type="date"></div>
+      <div class="field"><label>Durée</label><input data-bind="bail.duree" type="text" placeholder="ex. 3 ans, 1 an, 9 mois"></div>
+      <div class="field"><label>Date d'échéance</label><input data-bind="bail.date_echeance" type="date"></div>
+    </div>
+    <div class="grid2">
+      <div class="field"><label>Assurance habitation</label><input data-bind="bail.assurance_hab" type="text" placeholder="compagnie"></div>
+      <div class="field"><label>N° de contrat d'assurance</label><input data-bind="bail.num_assurance" type="text"></div>
+    </div>
+  </div>
     <h2>Grille APML — 14 critères de décence</h2>
     <p class="sub">Réf. CCH art. L.635-1 · Décret n°2002-120. Réponse : Conforme / Non conforme / Sans objet.</p>
     <div id="apmlGrid"></div>
@@ -487,7 +531,18 @@ input:focus,textarea:focus,select:focus{outline:none;border-color:var(--navy);}
   <div class="card" id="sec-pieces">
     <h2>État des lieux — pièces</h2>
     <p class="sub" id="edlModeLbl"></p>
-    <div class="add-piece-row" id="addPieceRow"></div>
+
+    <div id="pieceConfigurator">
+      <h3>Configuration du logement</h3>
+      <p class="inline-note">Indiquez la composition du bien, puis générez automatiquement les pièces. Vous pourrez ensuite les compléter, renommer ou en ajouter.</p>
+      <div id="configGrid" class="config-grid"></div>
+      <div class="section-actions" style="justify-content:flex-start;">
+        <button type="button" class="btn btn-lime" id="btnGenerate">⚙️ Générer les pièces</button>
+        <button type="button" class="btn btn-line btn-sm" id="btnConfigToggle">Ajout manuel</button>
+      </div>
+    </div>
+
+    <div class="add-piece-row" id="addPieceRow" style="display:none;"></div>
     <div id="piecesList"></div>
   </div>
 
@@ -616,10 +671,11 @@ function newState(type, commanditaire){
     },
     bien: {
       adresse_voie:"", adresse_comp:"", code_postal:"", ville:"",
-      periode_construction:"", type:"maison", etage:"", nb_chambres:0,
+      periode_construction:"", type:"maison", meuble:false, etage:"", nb_chambres:0,
       typologie:"", surface_m2:0, nb_pieces_principales:0,
       chauffage_type:"", ecs_type:"", gaz:"", electricite:"",
-      dpe:{valeur_kwh:0, classe:"", date:"", reference:""}, observations:""
+      dpe:{valeur_kwh:0, classe:"", date:"", reference:""}, observations:"",
+      config:{}
     },
     mandant: {
       type:"particulier", qualite:"", nom:"", prenom:"", ddn:"", lieu_naissance:"",
@@ -689,20 +745,59 @@ var ELEM_SDB = [
   "Baignoire / douche, robinetterie","WC (cuvette, chasse, abattant)",
   "Vasque / lavabo","VMC / aération","Placards / miroir"
 ];
+var ELEM_WC = [
+  "Sols (revêtement, état)","Murs et plinthes","Plafond","Porte(s)",
+  "WC (cuvette, chasse, abattant)","VMC / aération","Éclairage (luminaire, ampoule)"
+];
 var ELEM_EXT = [
   "Accès (portail, porte immeuble)","Boîte aux lettres",
   "Cave / parking (si concerné)","Jardin / terrasse (si concerné)"
 ];
+var ELEM_ANNEXE = [
+  "Sols","Murs","Plafond","Porte(s)","Éclairage","Aération / ventilation"
+];
 
+/* Mobilier obligatoire — Décret n°2015-981 du 31 juillet 2015 (art. 25-4 loi 89-462).
+   11 catégories, réparties par pièce concernée. */
+var MOBILIER_LEGAL = {
+  chambre: [
+    "Literie avec couette ou couverture (décret 2015-981)",
+    "Dispositif d'occultation des fenêtres (chambres)"
+  ],
+  cuisine: [
+    "Plaques de cuisson (décret 2015-981)",
+    "Four ou four à micro-ondes (décret 2015-981)",
+    "Réfrigérateur et congélateur (ou compartiment ≤ -6°C)",
+    "Vaisselle nécessaire à la prise des repas",
+    "Ustensiles de cuisine",
+    "Table",
+    "Sièges",
+    "Étagères de rangement"
+  ],
+  commun: [
+    "Luminaires (décret 2015-981)",
+    "Matériel d'entretien ménager adapté au logement"
+  ]
+};
+
+/* Liste étendue des types de pièces (config auto au départ) */
 var PIECES_TYPES = [
-  {key:"sejour",  label:"Séjour / Salon",   elems:ELEM_COMMUNS},
-  {key:"cuisine", label:"Cuisine",          elems:ELEM_COMMUNS.concat(ELEM_CUISINE)},
-  {key:"chambre", label:"Chambre",          elems:ELEM_COMMUNS},
-  {key:"sdb",     label:"Salle de bain",    elems:ELEM_COMMUNS.concat(ELEM_SDB)},
-  {key:"wc",      label:"WC",               elems:["Sols (revêtement, état)","Murs et plinthes","Plafond","Porte(s)","WC (cuvette, chasse, abattant)","VMC / aération","Éclairage (luminaire, ampoule)"]},
-  {key:"entree",  label:"Entrée / Couloir", elems:ELEM_COMMUNS},
-  {key:"exterieur",label:"Extérieur / Communs", elems:ELEM_EXT},
-  {key:"autre",   label:"Autre pièce",      elems:ELEM_COMMUNS}
+  {key:"sejour",    label:"Séjour / Salon",       elems:ELEM_COMMUNS, cfg:true},
+  {key:"cuisine",   label:"Cuisine",              elems:ELEM_COMMUNS.concat(ELEM_CUISINE), cfg:true},
+  {key:"chambre",   label:"Chambre",              elems:ELEM_COMMUNS, cfg:true, count:true},
+  {key:"bureau",    label:"Bureau",               elems:ELEM_COMMUNS, cfg:true, count:true},
+  {key:"mezzanine", label:"Mezzanine",            elems:ELEM_COMMUNS, cfg:true, count:true},
+  {key:"sdb",       label:"Salle de bain",        elems:ELEM_COMMUNS.concat(ELEM_SDB), cfg:true, count:true},
+  {key:"wc",        label:"WC",                   elems:ELEM_WC, cfg:true, count:true},
+  {key:"entree",    label:"Entrée / Dégagement",  elems:ELEM_COMMUNS, cfg:true},
+  {key:"dressing",  label:"Dressing",             elems:ELEM_ANNEXE, cfg:true, count:true},
+  {key:"buanderie", label:"Buanderie",            elems:ELEM_ANNEXE, cfg:true},
+  {key:"cellier",   label:"Cellier",              elems:ELEM_ANNEXE, cfg:true},
+  {key:"garage",    label:"Garage",               elems:ELEM_ANNEXE, cfg:true},
+  {key:"cave",      label:"Cave",                 elems:ELEM_ANNEXE, cfg:true},
+  {key:"combles",   label:"Combles",              elems:ELEM_ANNEXE, cfg:true},
+  {key:"exterieur", label:"Extérieur / Communs",  elems:ELEM_EXT, cfg:true},
+  {key:"autre",     label:"Autre pièce",          elems:ELEM_COMMUNS, cfg:false}
 ];
 
 var ETATS = [
@@ -713,6 +808,18 @@ var ETATS = [
   {v:"absent",  l:"Absent"},
   {v:"nv",      l:"Non vérifié"}
 ];
+
+/* Retourne la liste d'éléments d'une pièce, mobilier inclus si meublé */
+function elemsForPiece(baseKey){
+  var pt = PIECES_TYPES.filter(function(p){return p.key===baseKey;})[0];
+  var list = pt ? pt.elems.slice() : ELEM_COMMUNS.slice();
+  if(STATE && STATE.bien && STATE.bien.meuble){
+    if(baseKey==="chambre") list = list.concat(MOBILIER_LEGAL.chambre);
+    if(baseKey==="cuisine") list = list.concat(MOBILIER_LEGAL.cuisine);
+    if(baseKey==="sejour")  list = list.concat(MOBILIER_LEGAL.commun);
+  }
+  return list;
+}
 
 /* ---------- État courant ---------- */
 var STATE = null;
@@ -854,6 +961,7 @@ function applyTypeVisibility(){
   var isEdl = !isApml;
   show("#sec-apml", isApml);
   show("#sec-pieces", isEdl);
+  show("#sec-bail", isEdl);
   show("#conclApml", isApml);
   show("#sec-locataire", isEdl || false);
   show("#sec-bailleur", true);
@@ -886,7 +994,7 @@ function buildNavchips(){
     ["#sec-mission","Mission"],["#sec-bien","Bien"],["#sec-mandant","Mandant"],
     ["#sec-bailleur","Bailleur"]
   ];
-  if(STATE.type_constat!=="apml") items.push(["#sec-locataire","Locataire"]);
+  if(STATE.type_constat!=="apml") items.push(["#sec-locataire","Locataire"],["#sec-bail","Bail"]);
   if(STATE.type_constat==="apml") items.push(["#sec-apml","Grille APML"]);
   else items.push(["#sec-pieces","Pièces"]);
   items.push(["#sec-conclusions","Conclusions"],["#sec-signatures","Signatures"],["#sec-rgpd","RGPD"]);
@@ -934,9 +1042,11 @@ function bindInputs(){
 function bindSegments(){
   $all("[data-seg]").forEach(function(seg){
     var path = seg.getAttribute("data-seg");
+    var isBool = seg.getAttribute("data-segtype")==="bool";
     var cur = getPath(STATE, path);
     $all(".seg-btn", seg).forEach(function(btn){
-      var v = btn.getAttribute("data-val");
+      var raw = btn.getAttribute("data-val");
+      var v = isBool ? (raw==="true") : raw;
       btn.classList.toggle("sel", v===cur);
       if(!btn._bound){
         btn._bound=true;
@@ -945,12 +1055,19 @@ function bindSegments(){
           $all(".seg-btn", seg).forEach(function(b){ b.classList.remove("sel"); });
           btn.classList.add("sel");
           applyShowIf();
+          /* bascule meublé : régénère les éléments des pièces existantes */
+          if(path==="bien.meuble"){ refreshPiecesElements(); renderConfigurator(); renderPieces(); }
           updateProgress();
           scheduleSave();
         });
       }
     });
   });
+}
+
+/* Recalcule la liste d'éléments de chaque pièce (utile après bascule meublé) */
+function refreshPiecesElements(){
+  (STATE.pieces||[]).forEach(function(p){ p._elemsList = elemsForPiece(p.baseKey); });
 }
 
 /* ---------- Affichage conditionnel ---------- */
@@ -1003,21 +1120,48 @@ function renderApml(){
 /* ============================================================
    PIÈCES / ÉLÉMENTS EDL
    ============================================================ */
-function addPiece(typeKey){
+function makePiece(typeKey, indexSuffix){
   var pt = PIECES_TYPES.filter(function(p){return p.key===typeKey;})[0] || PIECES_TYPES[PIECES_TYPES.length-1];
-  var count = STATE.pieces.filter(function(p){return p.baseKey===typeKey;}).length;
-  var label = pt.label + (count>0? " "+(count+1) : "");
-  var piece = {
-    id: "p_"+Date.now()+"_"+Math.floor(Math.random()*1000),
+  var label = pt.label + (indexSuffix? " "+indexSuffix : "");
+  return {
+    id: "p_"+Date.now()+"_"+Math.floor(Math.random()*100000),
     baseKey: typeKey, label: label, custom:false,
     surface_m2:0, hauteur_m:0, orientation:"",
     entree:{ date:"", elements:{}, photos:[], observations:"" },
     sortie:{ date:"", elements:{}, photos:[], observations:"" },
-    _elemsList: pt.elems.slice()
+    _elemsList: elemsForPiece(typeKey)
   };
-  STATE.pieces.push(piece);
+}
+function addPiece(typeKey){
+  var count = STATE.pieces.filter(function(p){return p.baseKey===typeKey;}).length;
+  STATE.pieces.push(makePiece(typeKey, count>0? (count+1):""));
   renderPieces();
   updateProgress(); scheduleSave();
+}
+
+/* Génération automatique depuis le configurateur */
+function generatePieces(){
+  var cfg = STATE.bien.config || {};
+  var hasAny = Object.keys(cfg).some(function(k){ return cfg[k]>0; });
+  if(!hasAny){ alert("Indiquez au moins une pièce dans la configuration."); return; }
+  if(STATE.pieces.length){
+    if(!confirm("Des pièces existent déjà. Régénérer remplacera la liste actuelle (les saisies seront perdues). Continuer ?")) return;
+  }
+  STATE.pieces = [];
+  /* Ordre logique de parcours */
+  var order = ["entree","sejour","cuisine","chambre","bureau","mezzanine","dressing",
+               "sdb","wc","buanderie","cellier","garage","cave","combles","exterieur"];
+  order.forEach(function(key){
+    var n = cfg[key]||0;
+    for(var i=0;i<n;i++){
+      STATE.pieces.push(makePiece(key, n>1? (i+1):""));
+    }
+  });
+  /* nb_chambres synchronisé */
+  STATE.bien.nb_chambres = cfg.chambre||0;
+  renderPieces();
+  updateProgress(); scheduleSave();
+  var box=$("#piecesList"); if(box) box.scrollIntoView({behavior:"smooth",block:"start"});
 }
 function needEntree(){ return STATE.type_constat==="edl_entree" || STATE.type_constat==="edl_complet" || STATE.type_constat==="edl_sortie"; }
 function needSortie(){ return STATE.type_constat==="edl_sortie" || STATE.type_constat==="edl_complet"; }
@@ -1087,8 +1231,9 @@ function renderElement(piece, elemName){
       lbl.style.margin="4px 0"; lbl.textContent=slotLabel;
       wrap.appendChild(lbl);
     }
-    if(!slot.elements[elemName]) slot.elements[elemName]={etat:"",note:""};
+    if(!slot.elements[elemName]) slot.elements[elemName]={etat:"",note:"",photos:[]};
     var cur=slot.elements[elemName];
+    if(!cur.photos) cur.photos=[];
     var btns=document.createElement("div"); btns.className="etat-btns";
     ETATS.forEach(function(et){
       var b=document.createElement("button");
@@ -1109,12 +1254,49 @@ function renderElement(piece, elemName){
     note.style.borderRadius="6px"; note.style.minHeight="42px";
     note.addEventListener("input", function(){ cur.note=note.value; scheduleSave(); });
     wrap.appendChild(note);
+    /* Photos de l'élément (une ou plusieurs par item) */
+    wrap.appendChild(itemPhotoBlock(cur));
     return wrap;
   }
 
   if(needEntree()) row.appendChild(etatSelector(piece.entree,"Entrée"));
   if(needSortie()) row.appendChild(etatSelector(piece.sortie,"Sortie"));
   return row;
+}
+
+/* Bloc photo compact attaché à un élément (item) */
+function itemPhotoBlock(cur){
+  var wrap=document.createElement("div"); wrap.style.marginTop="8px";
+  var strip=document.createElement("div"); strip.className="photo-strip";
+  function refresh(){
+    strip.innerHTML="";
+    (cur.photos||[]).forEach(function(p,i){
+      var t=document.createElement("div"); t.className="photo-thumb print-photo-item";
+      var im=document.createElement("img"); im.src=p; t.appendChild(im);
+      var d=document.createElement("button");
+      d.type="button"; d.className="photo-del no-print"; d.textContent="×";
+      d.addEventListener("click",function(){ cur.photos.splice(i,1); refresh(); scheduleSave(); });
+      t.appendChild(d);
+      strip.appendChild(t);
+    });
+    var add=document.createElement("button");
+    add.type="button"; add.className="photo-add no-print"; add.textContent="📷";
+    add.style.fontSize="20px";
+    var inp=document.createElement("input");
+    inp.type="file"; inp.accept="image/*"; inp.setAttribute("capture","environment");
+    inp.style.display="none"; inp.multiple=true;
+    add.addEventListener("click",function(){ inp.click(); });
+    inp.addEventListener("change",function(){
+      Array.prototype.slice.call(inp.files||[]).forEach(function(file){
+        compressImage(file, function(dataUrl){
+          cur.photos=cur.photos||[]; cur.photos.push(dataUrl); refresh(); scheduleSave();
+        });
+      });
+    });
+    strip.appendChild(add); strip.appendChild(inp);
+  }
+  refresh();
+  return wrap;
 }
 
 /* ---------- Blocs utilitaires ---------- */
@@ -1207,6 +1389,55 @@ function renderAddPieceButtons(){
   });
 }
 
+/* ---------- Configurateur de pièces ---------- */
+var MOBILIER_KEYS = {chambre:true, cuisine:true, sejour:true};
+function renderConfigurator(){
+  var grid=$("#configGrid"); if(!grid) return;
+  grid.innerHTML="";
+  if(!STATE.bien.config) STATE.bien.config={};
+  var cfg=STATE.bien.config;
+  PIECES_TYPES.filter(function(p){return p.cfg;}).forEach(function(pt){
+    if(cfg[pt.key]==null) cfg[pt.key]=0;
+    var rowEl=document.createElement("div"); rowEl.className="config-row";
+    var lbl=document.createElement("div"); lbl.className="cr-lbl";
+    lbl.textContent=pt.label;
+    if(STATE.bien.meuble && MOBILIER_KEYS[pt.key]){
+      var tag=document.createElement("span"); tag.className="mobilier-tag"; tag.textContent="mobilier";
+      lbl.appendChild(tag);
+    }
+    rowEl.appendChild(lbl);
+    /* compteur */
+    var box=document.createElement("div"); box.className="config-count";
+    var minus=document.createElement("button");
+    minus.type="button"; minus.className="count-btn"; minus.textContent="−";
+    var val=document.createElement("span"); val.className="count-val"; val.textContent=cfg[pt.key];
+    var plus=document.createElement("button");
+    plus.type="button"; plus.className="count-btn"; plus.textContent="+";
+    minus.addEventListener("click", function(){
+      if(cfg[pt.key]>0){ cfg[pt.key]--; val.textContent=cfg[pt.key]; scheduleSave(); }
+    });
+    plus.addEventListener("click", function(){
+      cfg[pt.key]++; val.textContent=cfg[pt.key]; scheduleSave();
+    });
+    box.appendChild(minus); box.appendChild(val); box.appendChild(plus);
+    rowEl.appendChild(box);
+    grid.appendChild(rowEl);
+  });
+}
+function wireConfigurator(){
+  var g=$("#btnGenerate"); if(g && !g._bound){ g._bound=true; g.addEventListener("click", generatePieces); }
+  var t=$("#btnConfigToggle");
+  if(t && !t._bound){
+    t._bound=true;
+    t.addEventListener("click", function(){
+      var manual=$("#addPieceRow");
+      var showing = manual.style.display!=="none";
+      manual.style.display = showing? "none":"flex";
+      t.textContent = showing? "Ajout manuel" : "Masquer l'ajout manuel";
+    });
+  }
+}
+
 /* ============================================================
    SIGNATURES (canvas tactile)
    ============================================================ */
@@ -1291,7 +1522,7 @@ function startDossier(){
   writeLock();
   bindInputs(); bindSegments(); applyShowIf();
   applyTypeVisibility();
-  renderApml(); renderAddPieceButtons(); renderPieces();
+  renderApml(); renderAddPieceButtons(); renderConfigurator(); wireConfigurator(); renderPieces();
   initSignatures();
   updateProgress();
   showDossier();
