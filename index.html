@@ -522,6 +522,9 @@ input:focus,textarea:focus,select:focus{outline:none;border-color:var(--navy);}
       <div class="field"><label>N° de contrat d'assurance</label><input data-bind="bail.num_assurance" type="text"></div>
     </div>
   </div>
+
+  <!-- SECTION : Grille APML -->
+  <div class="card" id="sec-apml">
     <h2>Grille APML — 14 critères de décence</h2>
     <p class="sub">Réf. CCH art. L.635-1 · Décret n°2002-120. Réponse : Conforme / Non conforme / Sans objet.</p>
     <div id="apmlGrid"></div>
@@ -531,6 +534,17 @@ input:focus,textarea:focus,select:focus{outline:none;border-color:var(--navy);}
   <div class="card" id="sec-pieces">
     <h2>État des lieux — pièces</h2>
     <p class="sub" id="edlModeLbl"></p>
+
+    <h3>Dates du constat</h3>
+    <div class="grid2">
+      <div class="field" id="fieldDateEntree"><label>Date du constat d'entrée</label>
+        <input data-bind="mission.date_constat_entree" type="date" id="inpDateEntree"></div>
+      <div class="field" id="fieldDateSortie"><label>Date du constat de sortie</label>
+        <input data-bind="mission.date_constat_sortie" type="date" id="inpDateSortie"></div>
+    </div>
+    <div class="lock-banner" id="dateWarn" style="display:none;background:#fdecea;border-color:#e0a29c;color:#8a2820;">
+      ⚠️ La date de sortie ne peut pas être antérieure à la date d'entrée. Veuillez corriger.
+    </div>
 
     <div id="pieceConfigurator">
       <h3>Configuration du logement</h3>
@@ -550,12 +564,19 @@ input:focus,textarea:focus,select:focus{outline:none;border-color:var(--navy);}
   <div class="card" id="sec-conclusions">
     <h2>Conclusions</h2>
     <div id="conclApml">
-      <h3>Avis APML</h3>
+      <h3>Avis APML — conformité aux critères de décence</h3>
+      <p class="inline-note">L'expert constate la conformité ou non aux critères de décence. La décision d'autorisation de mise en location relève de la collectivité compétente (CCH art. L.635-1 s.).</p>
       <div class="field">
         <div class="seg" data-seg="conclusions.avis_apml">
           <button type="button" class="seg-btn" data-val="conforme">Conforme</button>
           <button type="button" class="seg-btn" data-val="non_conforme">Non conforme — points à traiter</button>
         </div></div>
+    </div>
+    <div id="conclEdl">
+      <h3>Désordres imputables</h3>
+      <p class="inline-note">Qualification factuelle des désordres constatés au comparatif entrée/sortie. La vétusté se constate et se décrit, elle ne se calcule pas (pas de grille officielle opposable).</p>
+      <div id="desordresList"></div>
+      <button type="button" class="chip-add no-print" id="btnAddDesordre">+ Ajouter un désordre</button>
     </div>
     <div class="field"><label>Observations de l'expert</label><textarea data-bind="conclusions.observations_expert"></textarea></div>
     <div class="field"><label>Recommandations techniques</label><textarea data-bind="conclusions.recommandations"></textarea></div>
@@ -665,6 +686,7 @@ function newState(type, commanditaire){
     mission: {
       type_label: labels[type] || "",
       numero_dossier:"", date_visite:"", heure_arrivee:"", heure_fin:"",
+      date_constat_entree:"", date_constat_sortie:"",
       expert: EXPERT_NOM, organisme:"CEL-47", siret:"",
       habilitation:"Certificat de compétences — Expertise insalubrité/décence (EFEL – Drouet Expertises, mai 2026)",
       lettre_mission:"", ref_lettre:"", accompagnant:"", observations:""
@@ -963,6 +985,7 @@ function applyTypeVisibility(){
   show("#sec-pieces", isEdl);
   show("#sec-bail", isEdl);
   show("#conclApml", isApml);
+  show("#conclEdl", isEdl);
   show("#sec-locataire", isEdl || false);
   show("#sec-bailleur", true);
   /* Titre & libellé */
@@ -984,6 +1007,7 @@ function applyTypeVisibility(){
     ? "Signature tactile — Expert et Bailleur (constat établi avant mise en location : pas de locataire)."
     : "Signature tactile — Expert, Bailleur et Locataire.";
   buildNavchips();
+  applyDateFieldsVisibility();
 }
 function show(sel, on){ var e=$(sel); if(e) e.style.display = on? "" : "none"; }
 
@@ -1029,6 +1053,9 @@ function bindInputs(){
         else if(el.type==="number") v = el.value===""?0:parseFloat(el.value);
         else v = el.value;
         setPath(STATE, path, v);
+        if(path==="mission.date_constat_entree" || path==="mission.date_constat_sortie"){
+          applyDateFieldsVisibility();
+        }
         updateProgress();
         scheduleSave();
       };
@@ -1068,6 +1095,28 @@ function bindSegments(){
 /* Recalcule la liste d'éléments de chaque pièce (utile après bascule meublé) */
 function refreshPiecesElements(){
   (STATE.pieces||[]).forEach(function(p){ p._elemsList = elemsForPiece(p.baseKey); });
+}
+
+/* Garde-fou §12 : la date de sortie ne peut pas être antérieure à l'entrée */
+function checkDatesCoherence(){
+  var warn=$("#dateWarn"); if(!warn) return true;
+  var de=STATE.mission.date_constat_entree, ds=STATE.mission.date_constat_sortie;
+  var bad = de && ds && ds < de;
+  warn.style.display = bad ? "block" : "none";
+  var inpS=$("#inpDateSortie");
+  if(inpS) inpS.style.borderColor = bad ? "var(--bad)" : "";
+  return !bad;
+}
+/* Affiche les champs date pertinents selon le type de constat */
+function applyDateFieldsVisibility(){
+  var fe=$("#fieldDateEntree"), fs=$("#fieldDateSortie");
+  if(fe) fe.style.display = needEntree() ? "" : "none";
+  if(fs) fs.style.display = needSortie() ? "" : "none";
+  var inpE=$("#inpDateEntree");
+  if(inpE) inpE.setAttribute("max", STATE.mission.date_constat_sortie || "");
+  var inpS=$("#inpDateSortie");
+  if(inpS) inpS.setAttribute("min", STATE.mission.date_constat_entree || "");
+  checkDatesCoherence();
 }
 
 /* ---------- Affichage conditionnel ---------- */
@@ -1118,8 +1167,62 @@ function renderApml(){
 }
 
 /* ============================================================
-   PIÈCES / ÉLÉMENTS EDL
+   DÉSORDRES IMPUTABLES (EDL)
    ============================================================ */
+var IMPUT = [["locataire","Locataire"],["bailleur","Bailleur"],["vetuste","Vétusté (non imputable)"]];
+function renderDesordres(){
+  var box=$("#desordresList"); if(!box) return;
+  box.innerHTML="";
+  var list=STATE.conclusions.desordres_imputables;
+  if(!Array.isArray(list)){ list=[]; STATE.conclusions.desordres_imputables=list; }
+  if(!list.length){
+    box.innerHTML='<p class="sub">Aucun désordre imputable saisi.</p>';
+    return;
+  }
+  list.forEach(function(d, idx){
+    var row=document.createElement("div"); row.className="apml-crit";
+    var loc=document.createElement("input");
+    loc.type="text"; loc.placeholder="Localisation (pièce / élément)"; loc.value=d.localisation||"";
+    loc.style.width="100%"; loc.style.padding="10px"; loc.style.border="1.5px solid var(--line)";
+    loc.style.borderRadius="8px"; loc.style.minHeight="44px"; loc.style.marginBottom="8px";
+    loc.addEventListener("input", function(){ d.localisation=loc.value; scheduleSave(); });
+    row.appendChild(loc);
+    var desc=document.createElement("textarea");
+    desc.placeholder="Description factuelle du désordre"; desc.value=d.description||"";
+    desc.style.width="100%"; desc.style.padding="10px"; desc.style.border="1.5px solid var(--line)";
+    desc.style.borderRadius="8px"; desc.style.minHeight="60px"; desc.style.marginBottom="8px";
+    desc.addEventListener("input", function(){ d.description=desc.value; scheduleSave(); });
+    row.appendChild(desc);
+    var btns=document.createElement("div"); btns.className="apml-btns";
+    IMPUT.forEach(function(o){
+      var b=document.createElement("button");
+      b.type="button"; b.className="apml-btn"; b.setAttribute("data-v",o[0]); b.textContent=o[1];
+      if(d.imputabilite===o[0]) b.classList.add("sel");
+      b.addEventListener("click", function(){
+        d.imputabilite=o[0];
+        $all(".apml-btn",btns).forEach(function(x){x.classList.remove("sel");});
+        b.classList.add("sel"); scheduleSave();
+      });
+      btns.appendChild(b);
+    });
+    row.appendChild(btns);
+    var del=document.createElement("button");
+    del.type="button"; del.className="btn btn-sm btn-danger no-print"; del.textContent="Supprimer";
+    del.addEventListener("click", function(){ list.splice(idx,1); renderDesordres(); scheduleSave(); });
+    row.appendChild(del);
+    box.appendChild(row);
+  });
+}
+function wireDesordres(){
+  var b=$("#btnAddDesordre");
+  if(b && !b._bound){
+    b._bound=true;
+    b.addEventListener("click", function(){
+      STATE.conclusions.desordres_imputables.push({localisation:"",description:"",imputabilite:""});
+      renderDesordres(); scheduleSave();
+    });
+  }
+}
 function makePiece(typeKey, indexSuffix){
   var pt = PIECES_TYPES.filter(function(p){return p.key===typeKey;})[0] || PIECES_TYPES[PIECES_TYPES.length-1];
   var label = pt.label + (indexSuffix? " "+indexSuffix : "");
@@ -1522,7 +1625,7 @@ function startDossier(){
   writeLock();
   bindInputs(); bindSegments(); applyShowIf();
   applyTypeVisibility();
-  renderApml(); renderAddPieceButtons(); renderConfigurator(); wireConfigurator(); renderPieces();
+  renderApml(); renderDesordres(); wireDesordres(); renderAddPieceButtons(); renderConfigurator(); wireConfigurator(); renderPieces();
   initSignatures();
   updateProgress();
   showDossier();
@@ -1616,6 +1719,11 @@ function duplicateDossier(){
    IMPRESSION
    ============================================================ */
 function preparePrint(){
+  if(!checkDatesCoherence()){
+    alert("Impression impossible : la date de sortie est antérieure à la date d'entrée. Corrigez les dates du constat avant d'imprimer.");
+    var sec=$("#sec-pieces"); if(sec) sec.scrollIntoView({behavior:"smooth",block:"start"});
+    return;
+  }
   $("#printRef").textContent = (STATE.mission.numero_dossier? "Dossier "+STATE.mission.numero_dossier+" · " : "")
     + (STATE.mission.date_visite? fmtDateFR(STATE.mission.date_visite) : "");
   /* logo impression = logo topbar, redimensionné pour la page */
