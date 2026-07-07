@@ -208,19 +208,25 @@ input:focus,textarea:focus,select:focus{outline:none;border-color:var(--navy);}
 .equip-adder{border:1px dashed var(--line);border-radius:8px;padding:10px;margin:10px 0;background:#f6faec;}
 .photo-add-btn{align-self:flex-start;}
 
-/* ===== Impression PDF (optimisé Safari iOS + macOS) ===== */
-@page{ size:A4; margin:14mm 12mm 16mm; }
+/* ===== Impression PDF (optimisé Safari iOS + macOS) =====
+   Stratégie : @page sans marge, marges reportées DANS le contenu (.wrap padding)
+   pour rester constantes quel que soit le réglage d'impression Safari. */
+@page{ size:A4; margin:0; }
 @media print{
-  *{ -webkit-print-color-adjust:exact !important; print-color-adjust:exact !important; }
-  html,body{ background:#fff !important; font-size:10.5pt; margin:0 !important; padding:0 !important; width:100% !important; }
+  *{ -webkit-print-color-adjust:exact !important; print-color-adjust:exact !important;
+     box-sizing:border-box !important; }
+  html,body{ background:#fff !important; font-size:10.5pt; margin:0 !important; padding:0 !important;
+    width:210mm !important; }
   .no-print,.topbar,.progress-wrap,.navchips,.section-actions,.etat-btns,
   .apml-btns,.photo-add,.photo-del,.sig-actions,.add-piece-row,.type-grid,
   .recent,.lock-banner,.config-count,.count-btn,.equip-adder,.chip-add,
   #pieceConfigurator,#addPieceRow,#fileInput{ display:none !important; }
-  /* conteneur : pleine largeur, aucune contrainte fixe qui déborde chez Safari */
-  .wrap{ max-width:none !important; width:auto !important; margin:0 !important; padding:0 0 14mm 0 !important; }
+  /* Les marges d'impression sont ICI (padding du conteneur), pas dans @page.
+     14mm haut/bas, 15mm gauche/droite — toujours respectées par Safari. */
+  .wrap{ max-width:none !important; width:210mm !important;
+    margin:0 !important; padding:14mm 15mm !important; }
   .card{ border:none !important; box-shadow:none !important; padding:0 !important;
-    margin:0 0 10pt !important; page-break-inside:avoid; width:auto !important; }
+    margin:0 0 10pt !important; page-break-inside:avoid; width:100% !important; }
   .card h2{ font-size:14pt; margin:0 0 4pt; color:#1F3864; }
   .card h3{ font-size:11pt; margin:9pt 0 5pt; color:#1F3864; }
   .grid2,.grid3{ display:block !important; }
@@ -236,7 +242,7 @@ input:focus,textarea:focus,select:focus{outline:none;border-color:var(--navy);}
   .piece-head{ background:#1F3864 !important; color:#fff !important; }
   .print-photo-item{ width:120pt; height:90pt; }
   .print-photo-piece{ width:130pt; height:100pt; }
-  /* ===== En-tête PDF (répété visuellement, logo en dur) ===== */
+  /* ===== En-tête PDF (logo en dur) ===== */
   .print-header{
     display:flex !important; justify-content:space-between; align-items:flex-start;
     border-bottom:2pt solid #1F3864; padding-bottom:6pt; margin-bottom:10pt;
@@ -249,19 +255,21 @@ input:focus,textarea:focus,select:focus{outline:none;border-color:var(--navy);}
   .ph-right{ text-align:right; }
   .ph-title{ font-weight:bold; color:#1F3864; font-size:12pt; }
   .ph-ref{ font-size:8pt; color:#555; margin-top:2pt; }
-  /* Pied de page légal (répété sur chaque page — compatible Safari) */
+  /* Pied de page légal (fixe, dans les marges internes) */
   .print-footer{
     display:block !important;
-    position:fixed; bottom:0; left:0; right:0;
+    position:fixed; bottom:4mm; left:15mm; right:15mm;
     font-size:7pt; color:#555; text-align:center;
     border-top:0.5pt solid #ccc; padding-top:3pt;
     line-height:1.4;
   }
-  /* Numérotation JS : repères positionnés en bas de chaque page A4 */
-  .page-num-mark{ display:block !important; font-size:7.5pt; color:#555; }
+  /* Repères de numérotation JS (positionnés à chaque saut de page) */
   #pageNumLayer{ display:block !important; }
+  .page-num-mark{ display:block !important; font-size:7.5pt; color:#555;
+    background:#fff; padding:1pt 0; }
 }
 .print-only,.print-header,.print-footer{ display:none; }
+#pageNumLayer,.page-num-mark{ display:none; }
 #pageNumLayer,.page-num-mark{ display:none; }
 .print-etat{font-size:10pt;font-weight:700;color:#1F3864;margin:4pt 0;}
 </style>
@@ -2069,34 +2077,37 @@ function preparePrint(){
 }
 
 /* Numérotation JS robuste (compatible Safari iOS + macOS).
-   Insère des repères de numéro positionnés en bas de chaque page A4. */
+   Numérotation JS : repères positionnés à chaque saut de page A4. */
 function injectPageNumbers(){
   removePageNumbers();
-  var screen=$("#screenDossier"); if(!screen) return;
-  /* Dimensions d'une page A4 utile en pixels (96 dpi) :
-     hauteur A4 = 297mm ; marges haut+bas = 14+16mm => contenu ~267mm */
+  var wrap=document.querySelector(".wrap"); if(!wrap) return;
+  /* Page A4 = 297mm. Marges internes 14mm haut + 14mm bas => contenu utile 269mm.
+     Conversion mm -> px à 96 dpi. */
   var MM=96/25.4;
-  var pageContentH=(297-14-16)*MM;   /* hauteur utile par page */
-  var totalH=screen.scrollHeight;
-  var pages=Math.max(1, Math.ceil(totalH/pageContentH));
-  var container=document.createElement("div");
-  container.id="pageNumLayer";
+  var pageH=297*MM;              /* hauteur page entière */
+  var marginTop=14*MM, marginBot=14*MM;
+  var usableH=pageH-marginTop-marginBot;
+  var totalH=wrap.scrollHeight;
+  var pages=Math.max(1, Math.ceil(totalH/usableH));
+  var layer=document.createElement("div");
+  layer.id="pageNumLayer";
+  layer.style.position="absolute"; layer.style.top="0"; layer.style.left="0";
+  layer.style.right="0"; layer.style.pointerEvents="none";
   for(var i=0;i<pages;i++){
     var n=document.createElement("div");
     n.className="page-num-mark";
     n.textContent="Page "+(i+1)+" / "+pages;
-    /* positionné juste avant la fin de chaque page */
     n.style.position="absolute";
-    n.style.top=((i+1)*pageContentH - 6*MM)+"px";
-    n.style.left="0"; n.style.right="0";
-    n.style.textAlign="center";
-    container.appendChild(n);
+    /* place le numéro juste au-dessus du bas de chaque page imprimée */
+    n.style.top=(marginTop + (i+1)*usableH - 5*MM)+"px";
+    n.style.left="0"; n.style.right="0"; n.style.textAlign="center";
+    layer.appendChild(n);
   }
-  screen.style.position="relative";
-  screen.appendChild(container);
+  wrap.style.position="relative";
+  wrap.appendChild(layer);
 }
 function removePageNumbers(){
-  var l=$("#pageNumLayer"); if(l) l.parentNode.removeChild(l);
+  var l=$("#pageNumLayer"); if(l && l.parentNode) l.parentNode.removeChild(l);
 }
 /* Nettoyage après impression */
 window.addEventListener("afterprint", removePageNumbers);
