@@ -205,6 +205,7 @@ input:focus,textarea:focus,select:focus{outline:none;border-color:var(--navy);}
 .config-check{width:24px;height:24px;accent-color:var(--lime);}
 .mobilier-tag{display:inline-block;background:#eef6d8;color:var(--lime-d);font-size:10px;
   font-weight:700;padding:2px 7px;border-radius:10px;margin-left:6px;}
+.equip-adder{border:1px dashed var(--line);border-radius:8px;padding:10px;margin:10px 0;background:#f6faec;}
 
 /* ===== Impression PDF ===== */
 @page{margin:14mm 12mm 18mm;}
@@ -212,7 +213,7 @@ input:focus,textarea:focus,select:focus{outline:none;border-color:var(--navy);}
   body{background:#fff;font-size:11pt;}
   .no-print,.topbar,.progress-wrap,.navchips,.section-actions,.etat-btns,
   .apml-btns,.photo-add,.photo-del,.sig-actions,.add-piece-row,.type-grid,
-  .recent,.lock-banner{display:none !important;}
+  .recent,.lock-banner,.config-count,.count-btn,.equip-adder,.chip-add{display:none !important;}
   .wrap{max-width:none;padding:0;}
   .card{border:none;box-shadow:none;padding:0;margin:0 0 10pt;page-break-inside:avoid;}
   .print-only{display:block !important;}
@@ -223,6 +224,7 @@ input:focus,textarea:focus,select:focus{outline:none;border-color:var(--navy);}
   .print-photo-piece{width:130pt;height:100pt;}
 }
 .print-only,.print-header{display:none;}
+.print-etat{font-size:10pt;font-weight:700;color:#1F3864;margin:4pt 0;}
 </style>
 </head>
 <body>
@@ -753,73 +755,131 @@ var APML_CRITERES = [
   {id:"c14", t:"DPE < 450 kWh/m²/an", ref:"Art. 3 bis · Décret n°2021-872"}
 ];
 
-/* ---------- Éléments EDL par type de pièce ---------- */
-var ELEM_COMMUNS = [
-  "Sols (revêtement, état)","Murs et plinthes","Plafond","Fenêtres et vitrage",
-  "Volets / stores / occultation","Porte(s)","Radiateur / chauffage",
-  "Prises et interrupteurs","Éclairage (luminaire, ampoule)"
-];
-var ELEM_CUISINE = [
-  "Évier et robinetterie","Éléments de cuisine (meubles, plan de travail)",
-  "Appareil de cuisson (si fourni)","VMC / aération","Placards et rangements"
-];
-var ELEM_SDB = [
-  "Baignoire / douche, robinetterie","WC (cuvette, chasse, abattant)",
-  "Vasque / lavabo","VMC / aération","Placards / miroir"
-];
-var ELEM_WC = [
-  "Sols (revêtement, état)","Murs et plinthes","Plafond","Porte(s)",
-  "WC (cuvette, chasse, abattant)","VMC / aération","Éclairage (luminaire, ampoule)"
-];
-var ELEM_EXT = [
-  "Accès (portail, porte immeuble)","Boîte aux lettres",
-  "Cave / parking (si concerné)","Jardin / terrasse (si concerné)"
-];
-var ELEM_ANNEXE = [
-  "Sols","Murs","Plafond","Porte(s)","Éclairage","Aération / ventilation"
+/* ---------- Catalogue d'éléments EDL ----------
+   Chaque élément : {id, label, multi} — multi=true => instanciable en plusieurs
+   exemplaires numérotés (Fenêtre 1, Fenêtre 2…), chacun avec état + note + photos.
+   Réf. Décret n°2016-382 du 30 mars 2016. */
+
+/* Structure : surfaces communes (une seule occurrence chacune) */
+var E_SOLS      = {id:"sols",     label:"Sols (revêtement)",           multi:false};
+var E_MURS      = {id:"murs",     label:"Murs",                        multi:false};
+var E_PLINTHES  = {id:"plinthes", label:"Plinthes",                    multi:false};
+var E_PLAFOND   = {id:"plafond",  label:"Plafond",                     multi:false};
+/* Ouvrants et équipements — potentiellement multiples */
+var E_FENETRE   = {id:"fenetre",  label:"Fenêtre",                     multi:true};
+var E_VOLET     = {id:"volet",    label:"Volet / store",               multi:true};
+var E_PORTE     = {id:"porte",    label:"Porte",                       multi:true};
+var E_RADIATEUR = {id:"radiateur",label:"Radiateur / chauffage",       multi:true};
+var E_PRISE     = {id:"prise",    label:"Prise / interrupteur",        multi:true};
+var E_ECLAIRAGE = {id:"eclairage",label:"Point d'éclairage",           multi:true};
+
+/* Groupe surfaces (toujours présent dans une pièce habitable) */
+var GRP_SURFACES = [E_SOLS, E_MURS, E_PLINTHES, E_PLAFOND];
+/* Groupe ouvrants/équipements (multiples, quantité 0 par défaut) */
+var GRP_OUVRANTS = [E_FENETRE, E_VOLET, E_PORTE, E_RADIATEUR, E_PRISE, E_ECLAIRAGE];
+
+/* Éléments spécifiques cuisine */
+var E_EVIER     = {id:"evier",    label:"Évier et robinetterie",       multi:false};
+var E_MEUBLE_C  = {id:"meuble_c", label:"Meuble de cuisine",           multi:true};
+var E_PLAN      = {id:"plan",     label:"Plan de travail",             multi:false};
+var E_VMC       = {id:"vmc",      label:"VMC / aération",              multi:false};
+/* Éléments spécifiques SdB */
+var E_DOUCHE    = {id:"douche",   label:"Baignoire / douche + robinetterie", multi:false};
+var E_WC        = {id:"wc_cuv",   label:"WC (cuvette, chasse, abattant)",    multi:false};
+var E_VASQUE    = {id:"vasque",   label:"Vasque / lavabo",             multi:true};
+var E_MIROIR    = {id:"miroir",   label:"Miroir / placard SdB",        multi:true};
+/* Extérieur / communs */
+var E_ACCES     = {id:"acces",    label:"Accès (portail / porte immeuble)", multi:false};
+var E_BAL       = {id:"bal",      label:"Boîte aux lettres",           multi:false};
+var E_JARDIN    = {id:"jardin",   label:"Jardin / terrasse",           multi:false};
+
+/* ---------- Literie détaillée (chambre meublée) ---------- */
+var LITERIE = [
+  {id:"matelas", label:"Matelas (état, taches)",  multi:true},
+  {id:"sommier", label:"Sommier",                 multi:true},
+  {id:"couette", label:"Couette / couverture",    multi:true},
+  {id:"oreiller",label:"Oreiller",                multi:true}
 ];
 
-/* Mobilier obligatoire — Décret n°2015-981 du 31 juillet 2015 (art. 25-4 loi 89-462).
-   11 catégories, réparties par pièce concernée. */
+/* ---------- Mobilier obligatoire — Décret n°2015-981 ---------- */
 var MOBILIER_LEGAL = {
-  chambre: [
-    "Literie avec couette ou couverture (décret 2015-981)",
-    "Dispositif d'occultation des fenêtres (chambres)"
-  ],
+  chambre: LITERIE,
   cuisine: [
-    "Plaques de cuisson (décret 2015-981)",
-    "Four ou four à micro-ondes (décret 2015-981)",
-    "Réfrigérateur et congélateur (ou compartiment ≤ -6°C)",
-    "Vaisselle nécessaire à la prise des repas",
-    "Ustensiles de cuisine",
-    "Table",
-    "Sièges",
-    "Étagères de rangement"
+    {id:"plaques",  label:"Plaques de cuisson (décret 2015-981)", multi:false},
+    {id:"four",     label:"Four ou micro-ondes (décret 2015-981)", multi:false},
+    {id:"frigo",    label:"Réfrigérateur / congélateur",  multi:false},
+    {id:"vaisselle",label:"Vaisselle (prise des repas)",  multi:false},
+    {id:"ustensiles",label:"Ustensiles de cuisine",       multi:false},
+    {id:"table",    label:"Table",                        multi:true},
+    {id:"siege",    label:"Siège / chaise",               multi:true},
+    {id:"etagere",  label:"Étagère de rangement",         multi:true}
   ],
   commun: [
-    "Luminaires (décret 2015-981)",
-    "Matériel d'entretien ménager adapté au logement"
+    {id:"materiel_entretien", label:"Matériel d'entretien ménager", multi:false}
   ]
 };
 
-/* Liste étendue des types de pièces (config auto au départ) */
+/* ---------- Électroménager cuisine (optionnel, générable) ---------- */
+var ELECTRO_CUISINE = [
+  {id:"lave_vaisselle", label:"Lave-vaisselle",       multi:false},
+  {id:"lave_linge",     label:"Lave-linge",           multi:false},
+  {id:"seche_linge",    label:"Sèche-linge",          multi:false},
+  {id:"hotte",          label:"Hotte aspirante",      multi:false},
+  {id:"congelateur",    label:"Congélateur séparé",   multi:false},
+  {id:"cave_vin",       label:"Cave à vin",           multi:false}
+];
+
+/* ---------- Équipements optionnels (liste courante, toutes pièces) ---------- */
+var EQUIP_OPTIONNELS = [
+  {id:"clim",           label:"Climatisation / PAC",        multi:true},
+  {id:"volet_elec",     label:"Volet roulant électrique",   multi:true},
+  {id:"domotique",      label:"Domotique (box, thermostat connecté…)", multi:true},
+  {id:"vidéophone",     label:"Interphone / visiophone",    multi:false},
+  {id:"alarme",         label:"Alarme / détecteur",         multi:false},
+  {id:"seche_serviette",label:"Sèche-serviette",            multi:true},
+  {id:"cheminee",       label:"Cheminée / insert / poêle",  multi:false},
+  {id:"ventilateur",    label:"Ventilateur de plafond",     multi:true}
+];
+
+/* Groupes d'éléments par type de pièce (chaque item : instances=[] au départ) */
+function baseElemsFor(baseKey){
+  var g = GRP_SURFACES.concat(GRP_OUVRANTS);
+  if(baseKey==="cuisine")  g = GRP_SURFACES.concat([E_EVIER,E_MEUBLE_C,E_PLAN,E_VMC]).concat(GRP_OUVRANTS);
+  else if(baseKey==="sdb") g = GRP_SURFACES.concat([E_DOUCHE,E_WC,E_VASQUE,E_MIROIR,E_VMC]).concat(GRP_OUVRANTS);
+  else if(baseKey==="wc")  g = GRP_SURFACES.concat([E_WC,E_VMC]).concat([E_PORTE,E_ECLAIRAGE,E_PRISE]);
+  else if(baseKey==="exterieur") g = [E_ACCES,E_BAL,E_JARDIN];
+  else if(["dressing","buanderie","cellier","garage","cave","combles"].indexOf(baseKey)>=0)
+    g = [E_SOLS,E_MURS,E_PLAFOND,E_PORTE,E_ECLAIRAGE,E_PRISE,E_VMC];
+  return g;
+}
+
+/* Mobilier ajouté si meublé */
+function mobilierFor(baseKey){
+  if(!STATE || !STATE.bien || !STATE.bien.meuble) return [];
+  if(baseKey==="chambre") return MOBILIER_LEGAL.chambre;
+  if(baseKey==="cuisine") return MOBILIER_LEGAL.cuisine;
+  if(baseKey==="sejour")  return MOBILIER_LEGAL.commun;
+  return [];
+}
+
+/* Types de pièces (config auto au départ) */
 var PIECES_TYPES = [
-  {key:"sejour",    label:"Séjour / Salon",       elems:ELEM_COMMUNS, cfg:true},
-  {key:"cuisine",   label:"Cuisine",              elems:ELEM_COMMUNS.concat(ELEM_CUISINE), cfg:true},
-  {key:"chambre",   label:"Chambre",              elems:ELEM_COMMUNS, cfg:true, count:true},
-  {key:"bureau",    label:"Bureau",               elems:ELEM_COMMUNS, cfg:true, count:true},
-  {key:"mezzanine", label:"Mezzanine",            elems:ELEM_COMMUNS, cfg:true, count:true},
-  {key:"sdb",       label:"Salle de bain",        elems:ELEM_COMMUNS.concat(ELEM_SDB), cfg:true, count:true},
-  {key:"wc",        label:"WC",                   elems:ELEM_WC, cfg:true, count:true},
-  {key:"entree",    label:"Entrée / Dégagement",  elems:ELEM_COMMUNS, cfg:true},
-  {key:"dressing",  label:"Dressing",             elems:ELEM_ANNEXE, cfg:true, count:true},
-  {key:"buanderie", label:"Buanderie",            elems:ELEM_ANNEXE, cfg:true},
-  {key:"cellier",   label:"Cellier",              elems:ELEM_ANNEXE, cfg:true},
-  {key:"garage",    label:"Garage",               elems:ELEM_ANNEXE, cfg:true},
-  {key:"cave",      label:"Cave",                 elems:ELEM_ANNEXE, cfg:true},
-  {key:"combles",   label:"Combles",              elems:ELEM_ANNEXE, cfg:true},
-  {key:"exterieur", label:"Extérieur / Communs",  elems:ELEM_EXT, cfg:true},
-  {key:"autre",     label:"Autre pièce",          elems:ELEM_COMMUNS, cfg:false}
+  {key:"sejour",    label:"Séjour / Salon",       cfg:true},
+  {key:"cuisine",   label:"Cuisine",              cfg:true},
+  {key:"chambre",   label:"Chambre",              cfg:true},
+  {key:"bureau",    label:"Bureau",               cfg:true},
+  {key:"mezzanine", label:"Mezzanine",            cfg:true},
+  {key:"sdb",       label:"Salle de bain",        cfg:true},
+  {key:"wc",        label:"WC",                   cfg:true},
+  {key:"entree",    label:"Entrée / Dégagement",  cfg:true},
+  {key:"dressing",  label:"Dressing",             cfg:true},
+  {key:"buanderie", label:"Buanderie",            cfg:true},
+  {key:"cellier",   label:"Cellier",              cfg:true},
+  {key:"garage",    label:"Garage",               cfg:true},
+  {key:"cave",      label:"Cave",                 cfg:true},
+  {key:"combles",   label:"Combles",              cfg:true},
+  {key:"exterieur", label:"Extérieur / Communs",  cfg:true},
+  {key:"autre",     label:"Autre pièce",          cfg:false}
 ];
 
 var ETATS = [
@@ -831,17 +891,12 @@ var ETATS = [
   {v:"nv",      l:"Non vérifié"}
 ];
 
-/* Retourne la liste d'éléments d'une pièce, mobilier inclus si meublé */
-function elemsForPiece(baseKey){
-  var pt = PIECES_TYPES.filter(function(p){return p.key===baseKey;})[0];
-  var list = pt ? pt.elems.slice() : ELEM_COMMUNS.slice();
-  if(STATE && STATE.bien && STATE.bien.meuble){
-    if(baseKey==="chambre") list = list.concat(MOBILIER_LEGAL.chambre);
-    if(baseKey==="cuisine") list = list.concat(MOBILIER_LEGAL.cuisine);
-    if(baseKey==="sejour")  list = list.concat(MOBILIER_LEGAL.commun);
-  }
-  return list;
+/* Construit le catalogue d'éléments d'une pièce (déf. seulement, pas d'instances) */
+function catalogueFor(baseKey){
+  return baseElemsFor(baseKey).concat(mobilierFor(baseKey));
 }
+/* Rétro-compat : ancienne signature utilisée ailleurs */
+function elemsForPiece(baseKey){ return catalogueFor(baseKey).map(function(e){return e.label;}); }
 
 /* ---------- État courant ---------- */
 var STATE = null;
@@ -1094,7 +1149,8 @@ function bindSegments(){
 
 /* Recalcule la liste d'éléments de chaque pièce (utile après bascule meublé) */
 function refreshPiecesElements(){
-  (STATE.pieces||[]).forEach(function(p){ p._elemsList = elemsForPiece(p.baseKey); });
+  /* Le catalogue est recalculé dynamiquement par pieceCatalogue() ;
+     rien à pré-calculer. Fonction conservée pour compatibilité d'appel. */
 }
 
 /* Garde-fou §12 : la date de sortie ne peut pas être antérieure à l'entrée */
@@ -1230,9 +1286,9 @@ function makePiece(typeKey, indexSuffix){
     id: "p_"+Date.now()+"_"+Math.floor(Math.random()*100000),
     baseKey: typeKey, label: label, custom:false,
     surface_m2:0, hauteur_m:0, orientation:"",
+    extras:[],  /* équipements optionnels ajoutés : [{id,label,multi}] */
     entree:{ date:"", elements:{}, photos:[], observations:"" },
-    sortie:{ date:"", elements:{}, photos:[], observations:"" },
-    _elemsList: elemsForPiece(typeKey)
+    sortie:{ date:"", elements:{}, photos:[], observations:"" }
   };
 }
 function addPiece(typeKey){
@@ -1251,16 +1307,12 @@ function generatePieces(){
     if(!confirm("Des pièces existent déjà. Régénérer remplacera la liste actuelle (les saisies seront perdues). Continuer ?")) return;
   }
   STATE.pieces = [];
-  /* Ordre logique de parcours */
   var order = ["entree","sejour","cuisine","chambre","bureau","mezzanine","dressing",
                "sdb","wc","buanderie","cellier","garage","cave","combles","exterieur"];
   order.forEach(function(key){
     var n = cfg[key]||0;
-    for(var i=0;i<n;i++){
-      STATE.pieces.push(makePiece(key, n>1? (i+1):""));
-    }
+    for(var i=0;i<n;i++){ STATE.pieces.push(makePiece(key, n>1? (i+1):"")); }
   });
-  /* nb_chambres synchronisé */
   STATE.bien.nb_chambres = cfg.chambre||0;
   renderPieces();
   updateProgress(); scheduleSave();
@@ -1269,17 +1321,87 @@ function generatePieces(){
 function needEntree(){ return STATE.type_constat==="edl_entree" || STATE.type_constat==="edl_complet" || STATE.type_constat==="edl_sortie"; }
 function needSortie(){ return STATE.type_constat==="edl_sortie" || STATE.type_constat==="edl_complet"; }
 
+/* Liste finale des éléments d'une pièce = catalogue + extras ajoutés */
+function pieceCatalogue(piece){
+  var base = catalogueFor(piece.baseKey);
+  var extras = piece.extras||[];
+  return base.concat(extras);
+}
+/* Gestion des équipements optionnels ajoutés à une pièce ("extras") */
+function isExtra(piece, elemId){
+  return (piece.extras||[]).some(function(e){ return e.id===elemId; });
+}
+function removeExtra(piece, elemId){
+  piece.extras = (piece.extras||[]).filter(function(e){ return e.id!==elemId; });
+  /* purge les instances associées dans les deux slots */
+  ["entree","sortie"].forEach(function(sk){
+    if(piece[sk] && piece[sk].elements) delete piece[sk].elements[elemId];
+  });
+}
+function addExtra(piece, elem){
+  if(!piece.extras) piece.extras=[];
+  if(isExtra(piece, elem.id)) return;
+  piece.extras.push({id:elem.id, label:elem.label, multi:!!elem.multi});
+  /* une instance par défaut pour rendre l'item visible immédiatement */
+  setInstanceCount(piece, elem.id, 1);
+}
+/* Bloc « ajouter un équipement » : liste courante (clim, domotique, électro…) + champ libre */
+function renderEquipAdder(piece){
+  var wrap=document.createElement("div"); wrap.className="equip-adder no-print";
+  var title=document.createElement("div");
+  title.className="elem-name"; title.textContent="➕ Ajouter un équipement";
+  wrap.appendChild(title);
+  /* catalogue optionnel : équipements + (électro si cuisine) */
+  var options = EQUIP_OPTIONNELS.slice();
+  if(piece.baseKey==="cuisine") options = ELECTRO_CUISINE.concat(options);
+  var chips=document.createElement("div"); chips.style.display="flex";
+  chips.style.flexWrap="wrap"; chips.style.gap="6px"; chips.style.margin="6px 0";
+  options.forEach(function(opt){
+    if(isExtra(piece, opt.id)) return; /* déjà ajouté */
+    /* déjà présent dans le catalogue de base ? on ne propose pas de doublon */
+    var inBase = catalogueFor(piece.baseKey).some(function(e){ return e.id===opt.id; });
+    if(inBase) return;
+    var b=document.createElement("button");
+    b.type="button"; b.className="chip-add"; b.textContent="+ "+opt.label;
+    b.addEventListener("click", function(){
+      addExtra(piece, opt); renderPieces(); updateProgress(); scheduleSave();
+    });
+    chips.appendChild(b);
+  });
+  wrap.appendChild(chips);
+  /* champ libre */
+  var freeRow=document.createElement("div");
+  freeRow.style.display="flex"; freeRow.style.gap="8px"; freeRow.style.flexWrap="wrap";
+  var inp=document.createElement("input");
+  inp.type="text"; inp.placeholder="Autre équipement (saisie libre)";
+  inp.style.flex="1"; inp.style.minWidth="180px"; inp.style.padding="10px";
+  inp.style.border="1.5px solid var(--line)"; inp.style.borderRadius="8px"; inp.style.minHeight="44px";
+  var addBtn=document.createElement("button");
+  addBtn.type="button"; addBtn.className="btn btn-line btn-sm"; addBtn.textContent="Ajouter";
+  addBtn.addEventListener("click", function(){
+    var v=inp.value.trim(); if(!v) return;
+    var id="libre_"+Date.now()+"_"+Math.floor(Math.random()*1000);
+    addExtra(piece, {id:id, label:v, multi:true});
+    renderPieces(); updateProgress(); scheduleSave();
+  });
+  freeRow.appendChild(inp); freeRow.appendChild(addBtn);
+  wrap.appendChild(freeRow);
+  return wrap;
+}
+/* Accès aux instances d'un élément dans un slot ; garantit un tableau */
+function elemInstances(slot, elemId){
+  if(!slot.elements) slot.elements={};
+  if(!Array.isArray(slot.elements[elemId])) slot.elements[elemId]=[];
+  return slot.elements[elemId];
+}
+
 function renderPieces(){
   var box = $("#piecesList"); box.innerHTML="";
   if(!STATE.pieces.length){
-    box.innerHTML='<p class="sub">Aucune pièce ajoutée. Utilisez les boutons ci-dessus.</p>';
+    box.innerHTML='<p class="sub">Aucune pièce. Configurez le logement ci-dessus puis « Générer les pièces », ou ajoutez-les manuellement.</p>';
     return;
   }
   STATE.pieces.forEach(function(piece, idx){
-    if(!piece._elemsList){
-      var pt = PIECES_TYPES.filter(function(p){return p.key===piece.baseKey;})[0];
-      piece._elemsList = pt? pt.elems.slice() : ELEM_COMMUNS.slice();
-    }
     var card=document.createElement("div"); card.className="piece";
     var head=document.createElement("div"); head.className="piece-head";
     head.innerHTML='<span class="ph-name">'+esc(piece.label)+'</span>';
@@ -1301,19 +1423,22 @@ function renderPieces(){
     dims.appendChild(fieldTxt("Orientation", piece.orientation, function(v){piece.orientation=v;scheduleSave();}));
     body.appendChild(dims);
 
-    /* éléments */
-    piece._elemsList.forEach(function(elemName){
-      body.appendChild(renderElement(piece, elemName));
+    /* éléments (catalogue + extras) */
+    pieceCatalogue(piece).forEach(function(elem){
+      body.appendChild(renderElement(piece, elem));
     });
 
-    /* observations pièce + photos pièce (entrée/sortie) */
+    /* Ajout d'équipement optionnel */
+    body.appendChild(renderEquipAdder(piece));
+
+    /* observations pièce + photos pièce */
     if(needEntree()){
-      body.appendChild(subBlock("Observations entrée", piece.entree, "observations"));
-      body.appendChild(photoBlock(piece.entree, "Photos entrée (min. 2)"));
+      body.appendChild(subBlock("Observations entrée (pièce)", piece.entree, "observations"));
+      body.appendChild(photoBlock(piece.entree, "Photos générales entrée (min. 2)"));
     }
     if(needSortie()){
-      body.appendChild(subBlock("Observations sortie", piece.sortie, "observations"));
-      body.appendChild(photoBlock(piece.sortie, "Photos sortie (min. 2)"));
+      body.appendChild(subBlock("Observations sortie (pièce)", piece.sortie, "observations"));
+      body.appendChild(photoBlock(piece.sortie, "Photos générales sortie (min. 2)"));
     }
 
     card.appendChild(body);
@@ -1321,22 +1446,97 @@ function renderPieces(){
   });
 }
 
-function renderElement(piece, elemName){
+/* Rendu d'un élément : items simples (1 instance) ou multiples (0..N avec +/−) */
+function renderElement(piece, elem){
   var row=document.createElement("div"); row.className="elem-row";
-  var title=document.createElement("div"); title.className="elem-name"; title.textContent=elemName;
-  row.appendChild(title);
+  var titleRow=document.createElement("div");
+  titleRow.style.display="flex"; titleRow.style.justifyContent="space-between";
+  titleRow.style.alignItems="center"; titleRow.style.gap="10px";
+  var title=document.createElement("div"); title.className="elem-name"; title.textContent=elem.label;
+  titleRow.appendChild(title);
 
-  function etatSelector(slot, slotLabel){
-    var wrap=document.createElement("div");
+  /* Détermine le nombre d'instances de référence (basé sur le slot entrée si dispo, sinon sortie) */
+  var refSlot = needEntree()? piece.entree : piece.sortie;
+  var refArr = elemInstances(refSlot, elem.id);
+
+  if(elem.multi){
+    /* compteur +/− ; simple => on force min 1 seulement si l'utilisateur ajoute */
+    var counter=document.createElement("div"); counter.className="config-count";
+    var minus=document.createElement("button"); minus.type="button"; minus.className="count-btn"; minus.textContent="−";
+    var val=document.createElement("span"); val.className="count-val"; val.textContent=refArr.length;
+    var plus=document.createElement("button"); plus.type="button"; plus.className="count-btn"; plus.textContent="+";
+    minus.addEventListener("click", function(){
+      if(refArr.length>0){
+        setInstanceCount(piece, elem.id, refArr.length-1);
+        renderPieces(); updateProgress(); scheduleSave();
+      }
+    });
+    plus.addEventListener("click", function(){
+      setInstanceCount(piece, elem.id, refArr.length+1);
+      renderPieces(); updateProgress(); scheduleSave();
+    });
+    counter.appendChild(minus); counter.appendChild(val); counter.appendChild(plus);
+    titleRow.appendChild(counter);
+    row.appendChild(titleRow);
+    /* si extra ajouté manuellement, bouton retirer l'équipement */
+    if(isExtra(piece, elem.id)){
+      var rm=document.createElement("button");
+      rm.type="button"; rm.className="btn btn-sm btn-danger no-print"; rm.textContent="Retirer cet équipement";
+      rm.style.marginBottom="8px";
+      rm.addEventListener("click", function(){ removeExtra(piece, elem.id); renderPieces(); scheduleSave(); });
+      row.appendChild(rm);
+    }
+    /* instances */
+    for(var i=0;i<refArr.length;i++){
+      row.appendChild(renderInstance(piece, elem, i));
+    }
+    if(refArr.length===0){
+      var hint=document.createElement("div"); hint.className="inline-note";
+      hint.textContent="Aucun exemplaire. Touchez + pour en ajouter.";
+      row.appendChild(hint);
+    }
+  } else {
+    row.appendChild(titleRow);
+    /* élément simple : garantir exactement 1 instance */
+    if(refArr.length===0) setInstanceCount(piece, elem.id, 1);
+    row.appendChild(renderInstance(piece, elem, 0, true));
+  }
+  return row;
+}
+
+/* Aligne le nombre d'instances dans les deux slots (entrée + sortie) */
+function setInstanceCount(piece, elemId, n){
+  ["entree","sortie"].forEach(function(sk){
+    var arr=elemInstances(piece[sk], elemId);
+    while(arr.length<n) arr.push({etat:"",note:"",photos:[]});
+    while(arr.length>n) arr.pop();
+  });
+}
+
+/* Rendu d'une instance donnée (index i) avec ses colonnes entrée/sortie */
+function renderInstance(piece, elem, i, isSimple){
+  var wrap=document.createElement("div");
+  wrap.style.borderTop = isSimple? "none" : "1px dashed var(--line)";
+  wrap.style.paddingTop = isSimple? "0" : "8px";
+  wrap.style.marginTop = isSimple? "0" : "8px";
+  if(!isSimple){
+    var tag=document.createElement("div");
+    tag.style.fontSize="12.5px"; tag.style.fontWeight="700"; tag.style.color="var(--navy)";
+    tag.style.marginBottom="4px";
+    tag.textContent=elem.label+" "+(i+1);
+    wrap.appendChild(tag);
+  }
+  function slotCol(slot, slotLabel){
+    var col=document.createElement("div");
     if(needEntree()&&needSortie()){
       var lbl=document.createElement("div");
       lbl.style.fontSize="12px"; lbl.style.fontWeight="700"; lbl.style.color="var(--navy)";
       lbl.style.margin="4px 0"; lbl.textContent=slotLabel;
-      wrap.appendChild(lbl);
+      col.appendChild(lbl);
     }
-    if(!slot.elements[elemName]) slot.elements[elemName]={etat:"",note:"",photos:[]};
-    var cur=slot.elements[elemName];
-    if(!cur.photos) cur.photos=[];
+    var arr=elemInstances(slot, elem.id);
+    while(arr.length<=i) arr.push({etat:"",note:"",photos:[]});
+    var cur=arr[i]; if(!cur.photos) cur.photos=[];
     var btns=document.createElement("div"); btns.className="etat-btns";
     ETATS.forEach(function(et){
       var b=document.createElement("button");
@@ -1350,21 +1550,25 @@ function renderElement(piece, elemName){
       });
       btns.appendChild(b);
     });
-    wrap.appendChild(btns);
+    col.appendChild(btns);
+    /* Rendu texte de l'état pour l'impression (les boutons sont masqués au print) */
+    var etatPrint=document.createElement("div");
+    etatPrint.className="print-only print-etat";
+    var lblEtat=(ETATS.filter(function(e){return e.v===cur.etat;})[0]||{}).l||"— non renseigné —";
+    etatPrint.textContent="État : "+lblEtat;
+    col.appendChild(etatPrint);
     var note=document.createElement("input");
     note.type="text"; note.placeholder="Précision (facultatif)"; note.value=cur.note||"";
     note.style.width="100%"; note.style.padding="9px"; note.style.border="1.5px solid var(--line)";
     note.style.borderRadius="6px"; note.style.minHeight="42px";
     note.addEventListener("input", function(){ cur.note=note.value; scheduleSave(); });
-    wrap.appendChild(note);
-    /* Photos de l'élément (une ou plusieurs par item) */
-    wrap.appendChild(itemPhotoBlock(cur));
-    return wrap;
+    col.appendChild(note);
+    col.appendChild(itemPhotoBlock(cur));
+    return col;
   }
-
-  if(needEntree()) row.appendChild(etatSelector(piece.entree,"Entrée"));
-  if(needSortie()) row.appendChild(etatSelector(piece.sortie,"Sortie"));
-  return row;
+  if(needEntree()) wrap.appendChild(slotCol(piece.entree,"Entrée"));
+  if(needSortie()) wrap.appendChild(slotCol(piece.sortie,"Sortie"));
+  return wrap;
 }
 
 /* Bloc photo compact attaché à un élément (item) */
@@ -1651,7 +1855,29 @@ function openStateData(json){
 function migrate(obj){
   /* compatibilité ascendante : compléter les clés manquantes */
   var base = newState(obj.type_constat||"apml", obj.commanditaire);
-  return deepMerge(base, obj);
+  var merged = deepMerge(base, obj);
+  /* Conversion des pièces ancien format (elements = objet label->{etat,note})
+     vers le nouveau format (elements = { id: [ {etat,note,photos} ] }) */
+  (merged.pieces||[]).forEach(function(p){
+    if(!p.extras) p.extras=[];
+    ["entree","sortie"].forEach(function(sk){
+      var slot=p[sk]; if(!slot||!slot.elements) return;
+      var conv={}, needConv=false;
+      for(var key in slot.elements){
+        var v=slot.elements[key];
+        if(Array.isArray(v)){ conv[key]=v; continue; } /* déjà nouveau format */
+        /* ancien : v = {etat,note,photos?} sous une clé = libellé */
+        needConv=true;
+        var id="legacy_"+sanitize(key).toLowerCase().slice(0,20);
+        conv[id]=[{etat:(v&&v.etat)||"", note:(v&&v.note)||"", photos:(v&&v.photos)||[]}];
+        /* on référence ce libellé comme extra pour qu'il reste affiché */
+        if(!p.extras.some(function(e){return e.id===id;}))
+          p.extras.push({id:id, label:key, multi:false});
+      }
+      if(needConv) slot.elements=conv;
+    });
+  });
+  return merged;
 }
 function deepMerge(base, over){
   if(Array.isArray(over)) return over;
