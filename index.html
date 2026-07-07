@@ -206,48 +206,63 @@ input:focus,textarea:focus,select:focus{outline:none;border-color:var(--navy);}
 .mobilier-tag{display:inline-block;background:#eef6d8;color:var(--lime-d);font-size:10px;
   font-weight:700;padding:2px 7px;border-radius:10px;margin-left:6px;}
 .equip-adder{border:1px dashed var(--line);border-radius:8px;padding:10px;margin:10px 0;background:#f6faec;}
+.photo-add-btn{align-self:flex-start;}
 
-/* ===== Impression PDF ===== */
-@page{
-  margin:16mm 15mm 20mm;
-  @bottom-center{
-    content:"Page " counter(page) " / " counter(pages);
-    font-family:"Segoe UI",Arial,sans-serif;
-    font-size:8pt;
-    color:#555;
-  }
-}
+/* ===== Impression PDF (optimisé Safari iOS + macOS) ===== */
+@page{ size:A4; margin:14mm 12mm 16mm; }
 @media print{
-  html,body{background:#fff;font-size:10.5pt;margin:0;padding:0;}
+  *{ -webkit-print-color-adjust:exact !important; print-color-adjust:exact !important; }
+  html,body{ background:#fff !important; font-size:10.5pt; margin:0 !important; padding:0 !important; width:100% !important; }
   .no-print,.topbar,.progress-wrap,.navchips,.section-actions,.etat-btns,
   .apml-btns,.photo-add,.photo-del,.sig-actions,.add-piece-row,.type-grid,
   .recent,.lock-banner,.config-count,.count-btn,.equip-adder,.chip-add,
-  #pieceConfigurator,#addPieceRow{display:none !important;}
-  .wrap{max-width:100%;width:100%;margin:0;padding:0;}
-  .card{border:none;box-shadow:none;padding:0;margin:0 0 12pt;page-break-inside:avoid;}
-  .card h2{font-size:14pt;margin:0 0 4pt;}
-  .card h3{font-size:11pt;margin:10pt 0 6pt;}
-  .print-only{display:block !important;}
-  .print-header{display:flex !important;}
-  select{-webkit-appearance:none;appearance:none;border:none;background:transparent;padding:0;color:#000;}
-  input,textarea{border:none !important;padding:2pt 0 !important;background:transparent !important;color:#000;min-height:0 !important;}
-  .piece{page-break-inside:avoid;margin-bottom:10pt;}
-  .print-photo-item{width:120pt;height:90pt;}
-  .print-photo-piece{width:130pt;height:100pt;}
-  /* En-tête PDF : logo bien visible, répété visuellement en tête de flux */
+  #pieceConfigurator,#addPieceRow,#fileInput{ display:none !important; }
+  /* conteneur : pleine largeur, aucune contrainte fixe qui déborde chez Safari */
+  .wrap{ max-width:none !important; width:auto !important; margin:0 !important; padding:0 0 14mm 0 !important; }
+  .card{ border:none !important; box-shadow:none !important; padding:0 !important;
+    margin:0 0 10pt !important; page-break-inside:avoid; width:auto !important; }
+  .card h2{ font-size:14pt; margin:0 0 4pt; color:#1F3864; }
+  .card h3{ font-size:11pt; margin:9pt 0 5pt; color:#1F3864; }
+  .grid2,.grid3{ display:block !important; }
+  .field{ margin-bottom:6pt; }
+  .field label{ font-size:8.5pt; }
+  .print-only{ display:block !important; }
+  select{ -webkit-appearance:none; appearance:none; border:none !important;
+    background:transparent !important; padding:0 !important; color:#000; }
+  input,textarea{ border:none !important; border-bottom:0.5pt solid #ccc !important;
+    padding:2pt 0 !important; background:transparent !important; color:#000;
+    min-height:0 !important; width:100% !important; }
+  .piece{ page-break-inside:avoid; margin-bottom:10pt; border:0.5pt solid #ddd !important; }
+  .piece-head{ background:#1F3864 !important; color:#fff !important; }
+  .print-photo-item{ width:120pt; height:90pt; }
+  .print-photo-piece{ width:130pt; height:100pt; }
+  /* ===== En-tête PDF (répété visuellement, logo en dur) ===== */
   .print-header{
-    justify-content:space-between;align-items:flex-start;
-    border-bottom:2.5pt solid #1F3864;padding-bottom:8pt;margin-bottom:12pt;
-    page-break-after:avoid;
+    display:flex !important; justify-content:space-between; align-items:flex-start;
+    border-bottom:2pt solid #1F3864; padding-bottom:6pt; margin-bottom:10pt;
+    page-break-after:avoid; width:100% !important;
   }
-  .ph-left{display:flex;flex-direction:column;gap:5pt;}
-  .ph-logo{height:52pt;width:auto;display:block;}
-  .ph-contact{font-size:8.5pt;color:#555;}
-  .ph-right{text-align:right;}
-  .ph-title{font-weight:800;color:#1F3864;font-size:13pt;}
-  .ph-ref{font-size:8.5pt;color:#555;margin-top:3pt;}
+  .ph-left{ display:block; }
+  .ph-logo{ width:55mm !important; height:auto !important; max-width:55mm !important;
+    display:block !important; margin-bottom:4pt; }
+  .ph-contact{ font-size:8pt; color:#555; }
+  .ph-right{ text-align:right; }
+  .ph-title{ font-weight:bold; color:#1F3864; font-size:12pt; }
+  .ph-ref{ font-size:8pt; color:#555; margin-top:2pt; }
+  /* Pied de page légal (répété sur chaque page — compatible Safari) */
+  .print-footer{
+    display:block !important;
+    position:fixed; bottom:0; left:0; right:0;
+    font-size:7pt; color:#555; text-align:center;
+    border-top:0.5pt solid #ccc; padding-top:3pt;
+    line-height:1.4;
+  }
+  /* Numérotation JS : repères positionnés en bas de chaque page A4 */
+  .page-num-mark{ display:block !important; font-size:7.5pt; color:#555; }
+  #pageNumLayer{ display:block !important; }
 }
-.print-only,.print-header{display:none;}
+.print-only,.print-header,.print-footer{ display:none; }
+#pageNumLayer,.page-num-mark{ display:none; }
 .print-etat{font-size:10pt;font-weight:700;color:#1F3864;margin:4pt 0;}
 </style>
 </head>
@@ -338,6 +353,13 @@ input:focus,textarea:focus,select:focus{outline:none;border-color:var(--navy);}
 <div id="screenDossier" style="display:none;">
 
   <div class="lock-banner" id="lockBanner"></div>
+
+  <!-- Pied de page imprimé (fixe, répété sur chaque page — compatible Safari) -->
+  <div class="print-footer">
+    Le présent rapport et ses annexes forment un tout indissociable dont il ne peut faire état,
+    vis-à-vis des tiers, que par publication ou communication in extenso.<br>
+    CEL-47 · Expert : Denis Charbonnier · charbonnier@cel-47.fr · www.cel-47.fr
+  </div>
 
   <!-- En-tête impression : logo en dur (garanti visible au PDF) -->
   <div class="print-header">
@@ -603,6 +625,13 @@ input:focus,textarea:focus,select:focus{outline:none;border-color:var(--navy);}
       <p class="inline-note">Qualification factuelle des désordres constatés au comparatif entrée/sortie. La vétusté se constate et se décrit, elle ne se calcule pas (pas de grille officielle opposable).</p>
       <div id="desordresList"></div>
       <button type="button" class="chip-add no-print" id="btnAddDesordre">+ Ajouter un désordre</button>
+      <div class="rgpd-box" style="margin-top:12px;">
+        <strong>Textes de référence — imputabilité :</strong><br>
+        · <strong>Code civil art. 1732</strong> — le locataire répond des dégradations pendant sa jouissance, sauf preuve d'absence de faute.<br>
+        · <strong>Code civil art. 1735</strong> — il répond du fait des personnes qu'il introduit dans le logement.<br>
+        · <strong>Code civil art. 1755</strong> — les réparations dues à la seule vétusté ou à la force majeure ne sont pas à sa charge.<br>
+        · <strong>Loi n°89-462 art. 7 (c et d)</strong> — obligations du locataire et causes d'exonération (vétusté, malfaçon, vice de construction, cas fortuit, force majeure).
+      </div>
     </div>
     <div class="field"><label>Observations de l'expert</label><textarea data-bind="conclusions.observations_expert"></textarea></div>
     <div class="field"><label>Recommandations techniques</label><textarea data-bind="conclusions.recommandations"></textarea></div>
@@ -649,12 +678,6 @@ input:focus,textarea:focus,select:focus{outline:none;border-color:var(--navy);}
       <div class="field"><label>Signataire de la notice</label><input data-bind="rgpd.signataire" type="text"></div>
       <div class="field"><label>Date</label><input data-bind="rgpd.date" type="date"></div>
     </div>
-  </div>
-
-  <!-- Pied constat (imprimé) -->
-  <div class="print-only" style="font-size:8pt;color:#555;border-top:1px solid #ccc;padding-top:6pt;margin-top:10pt;">
-    Le présent rapport et ses annexes forment un tout indissociable dont il ne peut faire état, vis-à-vis des tiers,
-    que par publication ou communication in extenso. CEL-47 · Expert : Denis Charbonnier
   </div>
 
   <!-- Actions bas de page -->
@@ -851,6 +874,28 @@ var ELECTRO_CUISINE = [
   {id:"hotte",          label:"Hotte aspirante",      multi:false},
   {id:"congelateur",    label:"Congélateur séparé",   multi:false},
   {id:"cave_vin",       label:"Cave à vin",           multi:false}
+];
+
+/* ---------- Mobilier meublant (générable dans toute pièce) ---------- */
+var MOBILIER_MEUBLANT = [
+  {id:"mob_canape",     label:"Canapé",               multi:true},
+  {id:"mob_fauteuil",   label:"Fauteuil",             multi:true},
+  {id:"mob_table_basse",label:"Table basse",          multi:true},
+  {id:"mob_table_salon",label:"Table de salon / séjour", multi:true},
+  {id:"mob_chaise",     label:"Chaise",               multi:true},
+  {id:"mob_tabouret",   label:"Tabouret",             multi:true},
+  {id:"mob_meuble_tv",  label:"Meuble TV",            multi:true},
+  {id:"mob_buffet",     label:"Buffet / bahut",       multi:true},
+  {id:"mob_commode",    label:"Commode",              multi:true},
+  {id:"mob_table_chevet",label:"Table de chevet",     multi:true},
+  {id:"mob_armoire",    label:"Armoire / penderie",   multi:true},
+  {id:"mob_dressing",   label:"Dressing / rangement",  multi:true},
+  {id:"mob_bibliotheque",label:"Bibliothèque / étagère", multi:true},
+  {id:"mob_bureau",     label:"Bureau",               multi:true},
+  {id:"mob_lit",        label:"Lit / cadre de lit",   multi:true},
+  {id:"mob_miroir",     label:"Miroir",               multi:true},
+  {id:"mob_lampe",      label:"Lampe / luminaire mobile", multi:true},
+  {id:"mob_electromenager",label:"Électroménager (petit)", multi:true}
 ];
 
 /* ---------- Équipements optionnels (liste courante, toutes pièces) ---------- */
@@ -1250,6 +1295,12 @@ function renderApml(){
    DÉSORDRES IMPUTABLES (EDL)
    ============================================================ */
 var IMPUT = [["locataire","Locataire"],["bailleur","Bailleur"],["vetuste","Vétusté (non imputable)"]];
+/* Fondement juridique par imputabilité (réf. fiche CEL-47 Imputabilité EDL) */
+var IMPUT_FONDEMENT = {
+  locataire: "Code civil art. 1732 — le locataire répond des dégradations survenues pendant sa jouissance, sauf preuve d'absence de faute. Art. 1735 pour le fait des personnes qu'il introduit. Loi n°89-462 art. 7 c.",
+  bailleur:  "Loi n°89-462 art. 6 et 7 d — désordre relevant du bailleur (malfaçon, vice de construction, défaut d'entretien à sa charge).",
+  vetuste:   "Code civil art. 1755 — aucune réparation locative n'est à la charge du locataire quand elle résulte de la seule vétusté ou de la force majeure. Loi n°89-462 art. 7 d."
+};
 function renderDesordres(){
   var box=$("#desordresList"); if(!box) return;
   box.innerHTML="";
@@ -1274,6 +1325,17 @@ function renderDesordres(){
     desc.addEventListener("input", function(){ d.description=desc.value; scheduleSave(); });
     row.appendChild(desc);
     var btns=document.createElement("div"); btns.className="apml-btns";
+    /* zone fondement juridique, mise à jour selon l'imputabilité */
+    var fond=document.createElement("div");
+    fond.style.fontSize="11.5px"; fond.style.color="var(--navy)"; fond.style.background="#eef1f6";
+    fond.style.borderRadius="6px"; fond.style.padding="8px 10px"; fond.style.marginTop="8px";
+    fond.style.lineHeight="1.4";
+    function refreshFond(){
+      if(d.imputabilite && IMPUT_FONDEMENT[d.imputabilite]){
+        fond.style.display="block";
+        fond.innerHTML="<strong>Fondement :</strong> "+esc(IMPUT_FONDEMENT[d.imputabilite]);
+      } else { fond.style.display="none"; }
+    }
     IMPUT.forEach(function(o){
       var b=document.createElement("button");
       b.type="button"; b.className="apml-btn"; b.setAttribute("data-v",o[0]); b.textContent=o[1];
@@ -1281,13 +1343,16 @@ function renderDesordres(){
       b.addEventListener("click", function(){
         d.imputabilite=o[0];
         $all(".apml-btn",btns).forEach(function(x){x.classList.remove("sel");});
-        b.classList.add("sel"); scheduleSave();
+        b.classList.add("sel"); refreshFond(); scheduleSave();
       });
       btns.appendChild(b);
     });
     row.appendChild(btns);
+    refreshFond();
+    row.appendChild(fond);
     var del=document.createElement("button");
     del.type="button"; del.className="btn btn-sm btn-danger no-print"; del.textContent="Supprimer";
+    del.style.marginTop="8px";
     del.addEventListener("click", function(){ list.splice(idx,1); renderDesordres(); scheduleSave(); });
     row.appendChild(del);
     box.appendChild(row);
@@ -1369,35 +1434,52 @@ function addExtra(piece, elem){
   /* une instance par défaut pour rendre l'item visible immédiatement */
   setInstanceCount(piece, elem.id, 1);
 }
-/* Bloc « ajouter un équipement » : liste courante (clim, domotique, électro…) + champ libre */
+/* Bloc « ajouter un équipement / mobilier » : chips par catégorie + champ libre */
 function renderEquipAdder(piece){
   var wrap=document.createElement("div"); wrap.className="equip-adder no-print";
   var title=document.createElement("div");
-  title.className="elem-name"; title.textContent="➕ Ajouter un équipement";
+  title.className="elem-name"; title.textContent="➕ Ajouter équipement ou mobilier";
   wrap.appendChild(title);
-  /* catalogue optionnel : équipements + (électro si cuisine) */
-  var options = EQUIP_OPTIONNELS.slice();
-  if(piece.baseKey==="cuisine") options = ELECTRO_CUISINE.concat(options);
-  var chips=document.createElement("div"); chips.style.display="flex";
-  chips.style.flexWrap="wrap"; chips.style.gap="6px"; chips.style.margin="6px 0";
-  options.forEach(function(opt){
-    if(isExtra(piece, opt.id)) return; /* déjà ajouté */
-    /* déjà présent dans le catalogue de base ? on ne propose pas de doublon */
-    var inBase = catalogueFor(piece.baseKey).some(function(e){ return e.id===opt.id; });
-    if(inBase) return;
-    var b=document.createElement("button");
-    b.type="button"; b.className="chip-add"; b.textContent="+ "+opt.label;
-    b.addEventListener("click", function(){
-      addExtra(piece, opt); renderPieces(); updateProgress(); scheduleSave();
+
+  function catBlock(catLabel, list){
+    var avail = list.filter(function(opt){
+      if(isExtra(piece, opt.id)) return false;
+      return !catalogueFor(piece.baseKey).some(function(e){ return e.id===opt.id; });
     });
-    chips.appendChild(b);
-  });
-  wrap.appendChild(chips);
+    if(!avail.length) return;
+    var sub=document.createElement("div");
+    sub.style.fontSize="12px"; sub.style.fontWeight="700"; sub.style.color="var(--navy)";
+    sub.style.margin="8px 0 4px"; sub.textContent=catLabel;
+    wrap.appendChild(sub);
+    var chips=document.createElement("div");
+    chips.style.display="flex"; chips.style.flexWrap="wrap"; chips.style.gap="6px";
+    avail.forEach(function(opt){
+      var b=document.createElement("button");
+      b.type="button"; b.className="chip-add"; b.textContent="+ "+opt.label;
+      b.addEventListener("click", function(){
+        addExtra(piece, opt); renderPieces(); updateProgress(); scheduleSave();
+      });
+      chips.appendChild(b);
+    });
+    wrap.appendChild(chips);
+  }
+
+  /* Équipements techniques (+ électro si cuisine) */
+  var equip = EQUIP_OPTIONNELS.slice();
+  if(piece.baseKey==="cuisine") equip = ELECTRO_CUISINE.concat(equip);
+  catBlock("Équipements", equip);
+  /* Mobilier meublant — disponible dans toutes les pièces */
+  catBlock("Mobilier", MOBILIER_MEUBLANT);
+
   /* champ libre */
+  var freeLbl=document.createElement("div");
+  freeLbl.style.fontSize="12px"; freeLbl.style.fontWeight="700"; freeLbl.style.color="var(--navy)";
+  freeLbl.style.margin="8px 0 4px"; freeLbl.textContent="Autre (saisie libre)";
+  wrap.appendChild(freeLbl);
   var freeRow=document.createElement("div");
   freeRow.style.display="flex"; freeRow.style.gap="8px"; freeRow.style.flexWrap="wrap";
   var inp=document.createElement("input");
-  inp.type="text"; inp.placeholder="Autre équipement (saisie libre)";
+  inp.type="text"; inp.placeholder="Nom de l'élément à ajouter";
   inp.style.flex="1"; inp.style.minWidth="180px"; inp.style.padding="10px";
   inp.style.border="1.5px solid var(--line)"; inp.style.borderRadius="8px"; inp.style.minHeight="44px";
   var addBtn=document.createElement("button");
@@ -1610,9 +1692,10 @@ function itemPhotoBlock(cur){
       t.appendChild(d);
       strip.appendChild(t);
     });
+    var n=(cur.photos||[]).length;
     var add=document.createElement("button");
-    add.type="button"; add.className="photo-add no-print"; add.textContent="📷";
-    add.style.fontSize="20px";
+    add.type="button"; add.className="btn btn-line btn-sm photo-add-btn no-print";
+    add.textContent = n>0 ? "📷 Ajouter une photo ("+n+")" : "📷 Ajouter une photo";
     var inp=document.createElement("input");
     inp.type="file"; inp.accept="image/*"; inp.setAttribute("capture","environment");
     inp.style.display="none"; inp.multiple=true;
@@ -1627,6 +1710,9 @@ function itemPhotoBlock(cur){
     strip.appendChild(add); strip.appendChild(inp);
   }
   refresh();
+  var hint=document.createElement("div"); hint.className="inline-note no-print";
+  hint.textContent="Photo(s) à l'appui de l'état constaté (usage, dégradation…).";
+  wrap.appendChild(strip); wrap.appendChild(hint);
   return wrap;
 }
 
@@ -1978,9 +2064,42 @@ function preparePrint(){
   var t=$("#printTitle"); if(t) t.textContent = STATE.mission.type_label || "";
   $("#printRef").textContent = (STATE.mission.numero_dossier? "Dossier "+STATE.mission.numero_dossier+" · " : "")
     + (STATE.mission.date_visite? fmtDateFR(STATE.mission.date_visite) : "");
-  /* le logo est en dur dans .print-header (garanti visible au PDF) */
+  injectPageNumbers();
   window.print();
 }
+
+/* Numérotation JS robuste (compatible Safari iOS + macOS).
+   Insère des repères de numéro positionnés en bas de chaque page A4. */
+function injectPageNumbers(){
+  removePageNumbers();
+  var screen=$("#screenDossier"); if(!screen) return;
+  /* Dimensions d'une page A4 utile en pixels (96 dpi) :
+     hauteur A4 = 297mm ; marges haut+bas = 14+16mm => contenu ~267mm */
+  var MM=96/25.4;
+  var pageContentH=(297-14-16)*MM;   /* hauteur utile par page */
+  var totalH=screen.scrollHeight;
+  var pages=Math.max(1, Math.ceil(totalH/pageContentH));
+  var container=document.createElement("div");
+  container.id="pageNumLayer";
+  for(var i=0;i<pages;i++){
+    var n=document.createElement("div");
+    n.className="page-num-mark";
+    n.textContent="Page "+(i+1)+" / "+pages;
+    /* positionné juste avant la fin de chaque page */
+    n.style.position="absolute";
+    n.style.top=((i+1)*pageContentH - 6*MM)+"px";
+    n.style.left="0"; n.style.right="0";
+    n.style.textAlign="center";
+    container.appendChild(n);
+  }
+  screen.style.position="relative";
+  screen.appendChild(container);
+}
+function removePageNumbers(){
+  var l=$("#pageNumLayer"); if(l) l.parentNode.removeChild(l);
+}
+/* Nettoyage après impression */
+window.addEventListener("afterprint", removePageNumbers);
 
 /* ============================================================
    CÂBLAGE UI (addEventListener uniquement — zéro onclick inline)
